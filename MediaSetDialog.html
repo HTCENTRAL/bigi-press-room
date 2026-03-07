@@ -76,6 +76,13 @@
     <div class="add-section-title">追加する媒体セット</div>
     <label>媒体名 <span style="color:red">*</span></label>
     <input type="text" id="newMedia" placeholder="例：Vogue">
+    <label>種別 <span style="color:red">*</span></label>
+    <select id="newType">
+      <option value="雑誌(紙面)">雑誌(紙面)</option>
+      <option value="雑誌(WEB)">雑誌(WEB)</option>
+      <option value="TV">TV</option>
+      <option value="その他">その他</option>
+    </select>
     <label>月号</label>
     <input type="text" id="newIssue" placeholder="例：4月号">
     <label>テーマ/着用者</label>
@@ -129,7 +136,7 @@
       res.mediaSets.forEach(function(ms, i) {
         var div = document.createElement('div');
         div.className = 'media-set-item';
-        div.textContent = (i + 1) + '.  ' + ms.media +
+        div.textContent = (i + 1) + '.  ' + (ms.type ? ms.type + ' / ' : '') + ms.media +
           (ms.issue ? ' / ' + ms.issue : '') +
           (ms.theme ? ' / ' + ms.theme : '') +
           (ms.releaseDate ? ' / ' + ms.releaseDate : '');
@@ -150,6 +157,7 @@
 
     var mediaSet = {
       media:       media,
+      type:        document.getElementById('newType').value,
       issue:       document.getElementById('newIssue').value.trim(),
       theme:       document.getElementById('newTheme').value.trim(),
       releaseDate: document.getElementById('newReleaseDate').value

@@ -237,10 +237,11 @@
     container.innerHTML = '';
 
     publishItems.forEach(function(item, itemIdx) {
-      var medias  = item.mediaStr  ? item.mediaStr.split(', ')  : [''];
-      var issues  = item.issueStr  ? item.issueStr.split(', ')  : [''];
-      var themes  = item.themeStr  ? item.themeStr.split(', ')  : [''];
-      var relDates = item.relDateStr ? item.relDateStr.split(', ') : [''];
+      var medias   = item.mediaStr  ? item.mediaStr.split(' | ')  : [''];
+      var issues   = item.issueStr  ? item.issueStr.split(' | ')  : [''];
+      var themes   = item.themeStr  ? item.themeStr.split(' | ')  : [''];
+      var relDates = item.relDateStr ? item.relDateStr.split(' | ') : [''];
+      var types    = item.typeStr   ? item.typeStr.split(' | ')   : [''];
 
       var section = document.createElement('div');
       section.className = 'item-section';
@@ -253,18 +254,20 @@
       var table = document.createElement('table');
       table.className = 'pub-table';
       table.innerHTML =
-        '<thead><tr><th style="width:40px;">掲載</th><th>媒体名</th><th>掲載号</th><th>テーマ/着用者</th><th>公開日</th></tr></thead>';
+        '<thead><tr><th style="width:40px;">掲載</th><th>媒体名</th><th>種別</th><th>掲載号</th><th>テーマ/着用者</th><th>公開日</th></tr></thead>';
       var tbody = document.createElement('tbody');
 
       medias.forEach(function(media, mIdx) {
-        var issue    = issues[mIdx]    || '';
-        var theme    = themes[mIdx]    || '';
-        var relDate  = relDates[mIdx]  || '';
+        var type     = types[mIdx]    || '';
+        var issue    = issues[mIdx]   || '';
+        var theme    = themes[mIdx]   || '';
+        var relDate  = relDates[mIdx] || '';
         var cbId = 'pcb_' + itemIdx + '_' + mIdx;
         var tr = document.createElement('tr');
         tr.innerHTML =
           '<td><input type="checkbox" id="' + cbId + '" checked></td>' +
           '<td>' + media + '</td>' +
+          '<td>' + type + '</td>' +
           '<td>' + issue + '</td>' +
           '<td>' + theme + '</td>' +
           '<td>' + relDate + '</td>';
@@ -281,10 +284,11 @@
     var combinations = [];
 
     publishItems.forEach(function(item, itemIdx) {
-      var medias   = item.mediaStr  ? item.mediaStr.split(', ')  : [''];
-      var issues   = item.issueStr  ? item.issueStr.split(', ')  : [''];
-      var themes   = item.themeStr  ? item.themeStr.split(', ')  : [''];
-      var relDates = item.relDateStr ? item.relDateStr.split(', ') : [''];
+      var medias   = item.mediaStr  ? item.mediaStr.split(' | ')  : [''];
+      var issues   = item.issueStr  ? item.issueStr.split(' | ')  : [''];
+      var themes   = item.themeStr  ? item.themeStr.split(' | ')  : [''];
+      var relDates = item.relDateStr ? item.relDateStr.split(' | ') : [''];
+      var types    = item.typeStr   ? item.typeStr.split(' | ')   : [''];
 
       medias.forEach(function(media, mIdx) {
         var cbId = 'pcb_' + itemIdx + '_' + mIdx;
@@ -293,6 +297,7 @@
           combinations.push({
             rowIndex:    item.rowIndex,
             media:       media,
+            type:        types[mIdx]    || '',
             issue:       issues[mIdx]   || '',
             releaseDate: relDates[mIdx] || '',
             theme:       themes[mIdx]   || '',

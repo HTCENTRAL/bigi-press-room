@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 14px; margin: 0; padding: 20px; background: #f9f9f9; }
+    h3 { margin: 0 0 18px; font-size: 16px; color: #333; }
+    .row { display: flex; align-items: center; margin-bottom: 14px; gap: 12px; }
+    label { width: 70px; font-weight: bold; color: #555; flex-shrink: 0; }
+    select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: #fff; }
+    button { padding: 10px 28px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+    #btnGenerate { background: #FF9900; color: #fff; font-weight: bold; }
+    #btnGenerate:hover { background: #e68a00; }
+    #btnGenerate:disabled { background: #ccc; cursor: default; }
+    #msg { margin-top: 16px; padding: 10px 14px; border-radius: 4px; display: none; font-size: 13px; }
+    .ok  { background: #e6f4ea; color: #2d6a2d; border: 1px solid #a8d5b5; }
+    .err { background: #fdecea; color: #922; border: 1px solid #f5c6c6; }
+    .spinner { display: none; margin-top: 16px; color: #888; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h3>整形用シート生成</h3>
+  <div class="row">
+    <label>年</label>
+    <select id="selYear"></select>
+  </div>
+  <div class="row">
+    <label>月</label>
+    <select id="selMonth"></select>
+  </div>
+  <div class="row" style="margin-top:6px;">
+    <button id="btnGenerate" onclick="generate()">シートを生成</button>
+  </div>
+  <div class="spinner" id="spinner">生成中...</div>
+  <div id="msg"></div>
+
+  <script>
+    (function() {
+      var yearSel = document.getElementById('selYear');
+      var now = new Date();
+      for (var y = now.getFullYear() - 1; y <= now.getFullYear() + 1; y++) {
+        var opt = document.createElement('option');
+        opt.value = y;
+        opt.text = y + '年';
+        if (y === now.getFullYear()) opt.selected = true;
+        yearSel.appendChild(opt);
+      }
+      var monthSel = document.getElementById('selMonth');
+      for (var m = 1; m <= 12; m++) {
+        var opt2 = document.createElement('option');
+        opt2.value = m;
+        opt2.text = m + '月';
+        if (m === now.getMonth() + 1) opt2.selected = true;
+        monthSel.appendChild(opt2);
+      }
+    })();
+
+    function generate() {
+      var year  = Number(document.getElementById('selYear').value);
+      var month = Number(document.getElementById('selMonth').value);
+      document.getElementById('btnGenerate').disabled = true;
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('msg').style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('btnGenerate').disabled = false;
+          var msgEl = document.getElementById('msg');
+          if (res.success) {
+            msgEl.className = 'ok';
+            msgEl.textContent = '「' + res.sheetName + '」を生成しました（' + res.rowCount + '行）。';
+          } else {
+            msgEl.className = 'err';
+            msgEl.textContent = res.message || '生成に失敗しました。';
+          }
+          msgEl.style.display = 'block';
+        })
+        .withFailureHandler(function(err) {
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('btnGenerate').disabled = false;
+          var msgEl = document.getElementById('msg');
+          msgEl.className = 'err';
+          msgEl.textContent = 'エラー: ' + err.message;
+          msgEl.style.display = 'block';
+        })
+        .generateFormattedSheet({ year: year, month: month });
+    }
+  </script>
+</body>
+</html>

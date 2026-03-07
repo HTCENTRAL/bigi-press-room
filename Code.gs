@@ -5,6 +5,14 @@ var SHEET_PUBLISH = '掲載リスト';
 var SHEET_SETTINGS = '設定';
 var START_SLIP_NO = 8877;
 
+var TYPE_CONFIG = {
+  '雑誌(紙面)': { title: '雑誌掲載リスト',  col1: '雑誌名' },
+  '雑誌(WEB)':  { title: 'WEB掲載リスト',   col1: '雑誌名' },
+  'TV':         { title: 'テレビ着用リスト', col1: '番組名' },
+  'その他':     { title: 'その他リスト',     col1: '媒体名' }
+};
+var TYPE_ORDER = ['雑誌(紙面)', '雑誌(WEB)', 'TV', 'その他'];
+
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('貸出管理')
@@ -13,6 +21,7 @@ function onOpen() {
     .addItem('媒体セット追加', 'openMediaSetDialog')
     .addSeparator()
     .addItem('月末配信', 'openEmailDialog')
+    .addItem('整形シート生成', 'openFormattedSheetDialog')
     .addToUi();
 }
 
@@ -24,7 +33,7 @@ function setupSheets() {
 
   var loanHeaders = [
     '伝票番号', '貸出日', 'スタイリスト名', '電話番号',
-    '媒体名', '月号', 'テーマ/着用者', '公開日',
+    '媒体名', '月号', 'テーマ/着用者', '公開日', '種別',
     '撮影日', '返却予定日',
     'ブランド', '品番', '色番', 'アイテム名', '単価',
     '返却ステータス', '返却日', '掲載済', '備考'
@@ -34,16 +43,16 @@ function setupSheets() {
     .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
   loanSheet.setFrozenRows(1);
 
-  var colWidths = [80, 85, 120, 110, 120, 70, 180, 100, 85, 95, 100, 100, 70, 180, 80, 90, 85, 65, 150];
+  var colWidths = [80, 85, 120, 110, 120, 70, 180, 100, 100, 85, 95, 100, 100, 70, 180, 80, 90, 85, 65, 150];
   for (var ci = 0; ci < colWidths.length; ci++) {
     loanSheet.setColumnWidth(ci + 1, colWidths[ci]);
   }
 
   // 条件付き書式: 未返却=赤のみ（1ルール）
-  var cfRange = loanSheet.getRange(2, 1, 1000, 19);
+  var cfRange = loanSheet.getRange(2, 1, 1000, 20);
   loanSheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=$P2="未返却"')
+      .whenFormulaSatisfied('=$Q2="未返却"')
       .setBackground('#ffcccc')
       .setRanges([cfRange])
       .build()
@@ -51,15 +60,11 @@ function setupSheets() {
 
   var pubSheet = ss.getSheetByName(SHEET_PUBLISH);
   if (!pubSheet) pubSheet = ss.insertSheet(SHEET_PUBLISH);
-  var pubHeaders = ['雑誌名', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク'];
-  var existingH = pubSheet.getRange(1, 1, 1, pubHeaders.length).getValues()[0];
-  var hasH = existingH.some(function(v) { return v !== ''; });
-  if (!hasH) {
-    pubSheet.getRange(1, 1, 1, pubHeaders.length).setValues([pubHeaders]);
-    pubSheet.getRange(1, 1, 1, pubHeaders.length)
-      .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
-    pubSheet.setFrozenRows(1);
-  }
+  var pubHeaders = ['雑誌名', '種別', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク'];
+  pubSheet.getRange(1, 1, 1, pubHeaders.length).setValues([pubHeaders]);
+  pubSheet.getRange(1, 1, 1, pubHeaders.length)
+    .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
+  pubSheet.setFrozenRows(1);
 
   var settingsSheet = ss.getSheetByName(SHEET_SETTINGS);
   if (!settingsSheet) {
@@ -67,6 +72,13 @@ function setupSheets() {
     settingsSheet.getRange('A1').setValue('月末配信先メールアドレス（1行1アドレス）');
     settingsSheet.getRange('A1').setFontWeight('bold');
     settingsSheet.getRange('A2').setValue('example@example.com');
+  }
+  // ブランド名セル（既存設定シートにも追記）
+  if (!settingsSheet.getRange('A3').getValue()) {
+    settingsSheet.getRange('A3').setValue('ブランド名').setFontWeight('bold');
+  }
+  if (!settingsSheet.getRange('B3').getValue()) {
+    settingsSheet.getRange('B3').setValue("L'EQUIPE");
   }
 
   Logger.log('setup done');
@@ -119,10 +131,11 @@ function registerLoan(data) {
     var slipNo = getNextSlipNumber();
     var today = todayStr();
 
-    var mediaStr   = data.mediaSets.map(function(m) { return m.media; }).join(', ');
-    var issueStr   = data.mediaSets.map(function(m) { return m.issue; }).join(', ');
-    var themeStr   = data.mediaSets.map(function(m) { return m.theme; }).join(', ');
-    var relDateStr = data.mediaSets.map(function(m) { return m.releaseDate; }).join(', ');
+    var mediaStr   = data.mediaSets.map(function(m) { return m.media; }).join(' | ');
+    var issueStr   = data.mediaSets.map(function(m) { return m.issue; }).join(' | ');
+    var themeStr   = data.mediaSets.map(function(m) { return m.theme; }).join(' | ');
+    var relDateStr = data.mediaSets.map(function(m) { return m.releaseDate; }).join(' | ');
+    var typeStr    = data.mediaSets.map(function(m) { return m.type || ''; }).join(' | ');
 
     var rows = [];
     for (var ii = 0; ii < data.items.length; ii++) {
@@ -130,10 +143,10 @@ function registerLoan(data) {
       var pr = item.price ? Number(String(item.price).replace(/,/g, '')) : '';
       rows.push([
         slipNo, today, data.stylist, data.phone,
-        mediaStr, issueStr, themeStr, relDateStr,
-        data.shootDate, data.plannedReturnDate,
-        item.brand, item.itemCode, item.colorCode, item.itemName, pr,
-        '未返却', '', false, ''
+        mediaStr, issueStr, themeStr, relDateStr, typeStr,  // E-I
+        data.shootDate, data.plannedReturnDate,              // J-K
+        item.brand, item.itemCode, item.colorCode, item.itemName, pr,  // L-P
+        '未返却', '', false, ''                              // Q-T
       ]);
     }
     if (rows.length === 0) {
@@ -141,13 +154,13 @@ function registerLoan(data) {
     }
 
     var startRow = getLastDataRow(sheet) + 1;
-    sheet.getRange(startRow, 1, rows.length, 19).setValues(rows);
-    // 0落ち防止: 伝票番号(A)・電話番号(D)・品番(L)・色番(M) をテキスト形式に
+    sheet.getRange(startRow, 1, rows.length, 20).setValues(rows);
+    // 0落ち防止: 伝票番号(A)・電話番号(D)・品番(M)・色番(N) をテキスト形式に
     sheet.getRange(startRow, 1,  rows.length, 1).setNumberFormat('@');
     sheet.getRange(startRow, 4,  rows.length, 1).setNumberFormat('@');
-    sheet.getRange(startRow, 12, rows.length, 1).setNumberFormat('@');
     sheet.getRange(startRow, 13, rows.length, 1).setNumberFormat('@');
-    sheet.getRange(startRow, 18, rows.length, 1).insertCheckboxes();
+    sheet.getRange(startRow, 14, rows.length, 1).setNumberFormat('@');
+    sheet.getRange(startRow, 19, rows.length, 1).insertCheckboxes();
 
     return { success: true, slipNo: slipNo, message: buildLoanMessage(slipNo, data) };
   } catch (e) {
@@ -186,7 +199,7 @@ function buildLoanMessage(slipNo, data) {
 
 function openMediaSetDialog() {
   var html = HtmlService.createHtmlOutputFromFile('MediaSetDialog')
-    .setWidth(500).setHeight(450);
+    .setWidth(500).setHeight(480);
   SpreadsheetApp.getUi().showModalDialog(html, '媒体セット追加');
 }
 
@@ -198,7 +211,7 @@ function getMediaSetsForSlip(slipNo) {
 
     var lastDataRow = getLastDataRow(sheet);
     if (lastDataRow <= 1) return { found: false };
-    var data = sheet.getRange(2, 1, lastDataRow - 1, 8).getValues();
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 9).getValues();
 
     var rowCount = 0;
     var mediaSets = [];
@@ -210,17 +223,19 @@ function getMediaSetsForSlip(slipNo) {
       rowCount++;
       // 先頭行の媒体セットのみ解析（全行同じ）
       if (rowCount === 1) {
-        var medias    = cellToStr(data[i][4]).split(', ');
-        var issues    = cellToStr(data[i][5]).split(', ');
-        var themes    = cellToStr(data[i][6]).split(', ');
-        var relDates  = cellToStr(data[i][7]).split(', ');
+        var medias    = cellToStr(data[i][4]).split(' | ');
+        var issues    = cellToStr(data[i][5]).split(' | ');
+        var themes    = cellToStr(data[i][6]).split(' | ');
+        var relDates  = cellToStr(data[i][7]).split(' | ');
+        var types     = cellToStr(data[i][8]).split(' | ');
         for (var j = 0; j < medias.length; j++) {
           if (!medias[j]) continue;
           mediaSets.push({
             media:       medias[j],
-            issue:       issues[j]   || '',
-            theme:       themes[j]   || '',
-            releaseDate: relDates[j] || ''
+            issue:       issues[j]    || '',
+            theme:       themes[j]    || '',
+            releaseDate: relDates[j]  || '',
+            type:        types[j]     || ''
           });
         }
       }
@@ -240,7 +255,7 @@ function addMediaSetToSlip(params) {
 
     var lastDataRow = getLastDataRow(sheet);
     if (lastDataRow <= 1) return { success: false, message: '該当データがありません。' };
-    var data = sheet.getRange(2, 1, lastDataRow - 1, 8).getValues();
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 9).getValues();
 
     var updated = 0;
     for (var i = 0; i < data.length; i++) {
@@ -250,7 +265,7 @@ function addMediaSetToSlip(params) {
       if (rowSlip !== s) continue;
 
       var r = i + 2;
-      var sep = ', ';
+      var sep = ' | ';
       var append = function(col, val) {
         var current = cellToStr(sheet.getRange(r, col).getValue());
         sheet.getRange(r, col).setValue(current ? current + sep + val : val);
@@ -259,6 +274,7 @@ function addMediaSetToSlip(params) {
       append(6, params.mediaSet.issue);
       append(7, params.mediaSet.theme);
       append(8, params.mediaSet.releaseDate);
+      append(9, params.mediaSet.type || '');
       updated++;
     }
     if (updated === 0) return { success: false, message: '該当する伝票番号が見つかりませんでした。' };
@@ -282,28 +298,29 @@ function searchUnreturnedItems(slipNo) {
 
     var lastDataRow = getLastDataRow(sheet);
     if (lastDataRow <= 1) return [];
-    // A〜P列（16列）を読み込む
-    var data = sheet.getRange(2, 1, lastDataRow - 1, 16).getValues();
+    // A〜Q列（17列）を読み込む
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 17).getValues();
 
     var results = [];
     for (var i = 0; i < data.length; i++) {
       if (!data[i][0]) continue;
       var rowSlip = String(data[i][0]);
       while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
-      // P列(index15)が「未返却」の行のみ
-      if (rowSlip === s && data[i][15] === '未返却') {
+      // Q列(index16)が「未返却」の行のみ
+      if (rowSlip === s && data[i][16] === '未返却') {
         results.push({
           rowIndex:   i + 2,
-          brand:      cellToStr(data[i][10]),
-          itemCode:   cellToStr(data[i][11]),
-          colorCode:  cellToStr(data[i][12]),
-          itemName:   cellToStr(data[i][13]),
-          price:      data[i][14] ? Number(data[i][14]) : 0,
+          brand:      cellToStr(data[i][11]),
+          itemCode:   cellToStr(data[i][12]),
+          colorCode:  cellToStr(data[i][13]),
+          itemName:   cellToStr(data[i][14]),
+          price:      data[i][15] ? Number(data[i][15]) : 0,
           stylist:    cellToStr(data[i][2]),
           mediaStr:   cellToStr(data[i][4]),
           issueStr:   cellToStr(data[i][5]),
           themeStr:   cellToStr(data[i][6]),
-          relDateStr: cellToStr(data[i][7])
+          relDateStr: cellToStr(data[i][7]),
+          typeStr:    cellToStr(data[i][8])
         });
       }
     }
@@ -319,8 +336,8 @@ function processReturn(params) {
     var loanSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     for (var i = 0; i < params.rows.length; i++) {
       var r = params.rows[i].rowIndex;
-      loanSheet.getRange(r, 16).setValue('返却済');  // P列
-      loanSheet.getRange(r, 17).setValue(params.returnDate); // Q列
+      loanSheet.getRange(r, 17).setValue('返却済');       // Q列
+      loanSheet.getRange(r, 18).setValue(params.returnDate); // R列
     }
     return { success: true };
   } catch (e) {
@@ -335,10 +352,10 @@ function processPublish(params) {
     var pubSheet = ss.getSheetByName(SHEET_PUBLISH);
     for (var i = 0; i < params.combinations.length; i++) {
       var c = params.combinations[i];
-      loanSheet.getRange(c.rowIndex, 18).setValue(true); // R列（掲載済）
+      loanSheet.getRange(c.rowIndex, 19).setValue(true); // S列（掲載済）
       var pubLastRow = pubSheet.getLastRow() + 1;
-      pubSheet.getRange(pubLastRow, 1, 1, 11).setValues([[
-        c.media, c.issue, c.releaseDate, c.theme, c.stylist,
+      pubSheet.getRange(pubLastRow, 1, 1, 12).setValues([[
+        c.media, c.type, c.issue, c.releaseDate, c.theme, c.stylist,
         c.itemCode, c.colorCode, c.price, c.itemName, '', ''
       ]]);
     }
@@ -358,12 +375,12 @@ function getPublishDataForMonth(year, month) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
   var lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
-  var data = sheet.getRange(2, 1, lastRow - 1, 11).getValues();
+  var data = sheet.getRange(2, 1, lastRow - 1, 12).getValues();
   var results = [];
   for (var i = 0; i < data.length; i++) {
     var row = data[i];
-    if (!row[0] && !row[1]) continue;
-    var pubDate = row[2]; // C列: 公開日
+    if (!row[0] && !row[2]) continue; // A=雑誌名, C=掲載号 で空行判定
+    var pubDate = row[3]; // D列: 公開日
     var matched = false;
     if (pubDate) {
       var d = new Date(pubDate);
@@ -374,17 +391,18 @@ function getPublishDataForMonth(year, month) {
     if (matched) {
       var rdStr = pubDate ? Utilities.formatDate(new Date(pubDate), Session.getScriptTimeZone(), 'yyyy/MM/dd') : '';
       results.push({
-        media:      cellToStr(row[0]),
-        issue:      cellToStr(row[1]),
+        media:       cellToStr(row[0]),
+        type:        cellToStr(row[1]),
+        issue:       cellToStr(row[2]),
         releaseDate: rdStr,
-        theme:      cellToStr(row[3]),
-        stylist:    cellToStr(row[4]),
-        itemCode:   cellToStr(row[5]),
-        colorCode:  cellToStr(row[6]),
-        price:      row[7] ? Number(row[7]) : 0,
-        itemName:   cellToStr(row[8]),
-        page:       cellToStr(row[9]),
-        imageLink:  cellToStr(row[10])
+        theme:       cellToStr(row[4]),
+        stylist:     cellToStr(row[5]),
+        itemCode:    cellToStr(row[6]),
+        colorCode:   cellToStr(row[7]),
+        price:       row[8] ? Number(row[8]) : 0,
+        itemName:    cellToStr(row[9]),
+        page:        cellToStr(row[10]),
+        imageLink:   cellToStr(row[11])
       });
     }
   }
@@ -428,6 +446,7 @@ function buildEmailHtml(year, month, items) {
     var priceStr = item.price ? ('¥' + Number(item.price).toLocaleString()) : '';
     rows += '<tr>' +
       '<td>' + item.media + '</td>' +
+      '<td>' + (item.type || '') + '</td>' +
       '<td>' + item.issue + '</td>' +
       '<td>' + item.releaseDate + '</td>' +
       '<td>' + item.theme + '</td>' +
@@ -445,7 +464,7 @@ function buildEmailHtml(year, month, items) {
     '<p>BIGI PRESS ROOMより掲載情報をお送りします。</p>' +
     '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">' +
     '<thead style="background:#4a4a4a;color:#fff;">' +
-    '<tr><th>雑誌名</th><th>掲載号</th><th>公開日</th><th>テーマ/着用者</th>' +
+    '<tr><th>雑誌名</th><th>種別</th><th>掲載号</th><th>公開日</th><th>テーマ/着用者</th>' +
     '<th>スタイリスト</th><th>品番</th><th>色番</th><th>上代</th><th>アイテム</th><th>頁</th><th>画像/リンク</th></tr>' +
     '</thead><tbody>' + rows + '</tbody></table>' +
     '<br><p style="color:#666;font-size:12px;">BIGI PRESS ROOM</p>' +
@@ -456,4 +475,128 @@ function testGetLastDataRow() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
   var row = getLastDataRow(sheet);
   Logger.log('最終データ行: ' + row);
+}
+
+// ===== 整形用シート生成 =====
+
+function getBrandName() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SETTINGS);
+  if (!sheet) return 'BIGI PRESS ROOM';
+  var v = sheet.getRange('B3').getValue();
+  return v ? String(v) : 'BIGI PRESS ROOM';
+}
+
+function openFormattedSheetDialog() {
+  var html = HtmlService.createHtmlOutputFromFile('FormattedSheetDialog')
+    .setWidth(400).setHeight(320);
+  SpreadsheetApp.getUi().showModalDialog(html, '整形シート生成');
+}
+
+function generateFormattedSheet(params) {
+  try {
+    var year  = Number(params.year);
+    var month = Number(params.month);
+    var items = getPublishDataForMonth(year, month);
+    var brandName = getBrandName();
+    var monthLabel = month + '月';
+    var sheetName = '整形用_' + year + '年' + month + '月';
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var outSheet = ss.getSheetByName(sheetName);
+    if (outSheet) {
+      outSheet.clearContents();
+      outSheet.clearFormats();
+    } else {
+      outSheet = ss.insertSheet(sheetName);
+    }
+
+    var currentRow = 1;
+    var colWidths = [120, 70, 55, 200, 100, 90, 90, 70, 200, 50];
+
+    TYPE_ORDER.forEach(function(type) {
+      var typeItems = items.filter(function(it) { return it.type === type; });
+      if (typeItems.length === 0) return;
+
+      // 公開日昇順ソート
+      typeItems.sort(function(a, b) {
+        var da = a.releaseDate ? new Date(a.releaseDate) : new Date(0);
+        var db = b.releaseDate ? new Date(b.releaseDate) : new Date(0);
+        return da - db;
+      });
+
+      var config = TYPE_CONFIG[type];
+
+      // ヘッダー行1（オレンジ）
+      var h1Range = outSheet.getRange(currentRow, 1, 1, 10);
+      h1Range.setBackground('#FF9900');
+      outSheet.getRange(currentRow, 1).setValue(brandName);
+      outSheet.getRange(currentRow, 4).setValue(monthLabel);
+      outSheet.getRange(currentRow, 8).setValue(config.title);
+      currentRow++;
+
+      // ヘッダー行2（薄オレンジ・太字）
+      var headers = [config.col1, '掲載号', '発売日', 'テーマ', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁'];
+      var h2Range = outSheet.getRange(currentRow, 1, 1, 10);
+      h2Range.setValues([headers]).setBackground('#FFD9B3').setFontWeight('bold');
+      currentRow++;
+
+      var prevMedia = null;
+      var prevValues = [null, null, null, null, null, null, null, null, null, null];
+
+      typeItems.forEach(function(item) {
+        // 媒体変わり目に空白行
+        if (prevMedia !== null && prevMedia !== item.media) {
+          currentRow++;
+          prevValues = [null, null, null, null, null, null, null, null, null, null];
+        }
+
+        // M/D形式の発売日
+        var relDateMD = '';
+        if (item.releaseDate) {
+          var d = new Date(item.releaseDate);
+          relDateMD = (d.getMonth() + 1) + '/' + d.getDate();
+        }
+
+        var row = [
+          item.media,
+          item.issue,
+          relDateMD,
+          item.theme,
+          item.stylist,
+          item.itemCode,
+          item.colorCode,
+          item.price || '',
+          item.itemName,
+          item.page
+        ];
+
+        // 列単位重複除去（媒体グループ内）
+        var outputRow = row.map(function(v, i) {
+          if (v !== '' && v !== null && v !== undefined && String(v) === String(prevValues[i])) return '';
+          return v;
+        });
+
+        var rowRange = outSheet.getRange(currentRow, 1, 1, 10);
+        rowRange.setValues([outputRow]);
+
+        // 上代（col8 = index7）を数値フォーマット
+        if (row[7] !== '') {
+          outSheet.getRange(currentRow, 8).setNumberFormat('¥#,##0');
+        }
+
+        prevValues = row;
+        prevMedia = item.media;
+        currentRow++;
+      });
+    });
+
+    // 列幅設定
+    for (var ci = 0; ci < colWidths.length; ci++) {
+      outSheet.setColumnWidth(ci + 1, colWidths[ci]);
+    }
+
+    return { success: true, sheetName: sheetName, rowCount: currentRow - 1 };
+  } catch (e) {
+    return { success: false, message: 'エラー: ' + e.message };
+  }
 }

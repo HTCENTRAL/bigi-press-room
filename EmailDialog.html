@@ -78,7 +78,7 @@
     <table id="previewTable">
       <thead>
         <tr>
-          <th>雑誌名</th><th>掲載号</th><th>公開日</th><th>テーマ/着用者</th><th>スタイリスト</th>
+          <th>雑誌名</th><th>種別</th><th>掲載号</th><th>公開日</th><th>テーマ/着用者</th><th>スタイリスト</th>
           <th>品番</th><th>色番</th><th>上代</th><th>アイテム</th><th>頁</th><th>画像/リンク</th>
         </tr>
       </thead>
@@ -168,6 +168,7 @@
       var price = item.price ? '¥' + Number(item.price).toLocaleString() : '';
       tr.innerHTML =
         '<td>' + (item.media || '') + '</td>' +
+        '<td>' + (item.type || '') + '</td>' +
         '<td>' + (item.issue || '') + '</td>' +
         '<td>' + (item.releaseDate || '') + '</td>' +
         '<td>' + (item.theme || '') + '</td>' +
