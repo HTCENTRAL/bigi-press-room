@@ -10,6 +10,7 @@ function onOpen() {
     .createMenu('貸出管理')
     .addItem('新規貸出登録', 'openLoanSidebar')
     .addItem('返却処理', 'openReturnDialog')
+    .addItem('媒体セット追加', 'openMediaSetDialog')
     .addSeparator()
     .addItem('月末配信', 'openEmailDialog')
     .addToUi();
@@ -181,6 +182,90 @@ function buildLoanMessage(slipNo, data) {
   lines.push('---');
   lines.push('ご返却の際はご連絡ください。');
   return lines.join('\n');
+}
+
+function openMediaSetDialog() {
+  var html = HtmlService.createHtmlOutputFromFile('MediaSetDialog')
+    .setWidth(500).setHeight(450);
+  SpreadsheetApp.getUi().showModalDialog(html, '媒体セット追加');
+}
+
+function getMediaSetsForSlip(slipNo) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
+    var s = String(slipNo);
+    while (s.length < 5) s = '0' + s;
+
+    var lastDataRow = getLastDataRow(sheet);
+    if (lastDataRow <= 1) return { found: false };
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 8).getValues();
+
+    var rowCount = 0;
+    var mediaSets = [];
+    for (var i = 0; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      var rowSlip = String(data[i][0]);
+      while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
+      if (rowSlip !== s) continue;
+      rowCount++;
+      // 先頭行の媒体セットのみ解析（全行同じ）
+      if (rowCount === 1) {
+        var medias    = cellToStr(data[i][4]).split(', ');
+        var issues    = cellToStr(data[i][5]).split(', ');
+        var themes    = cellToStr(data[i][6]).split(', ');
+        var relDates  = cellToStr(data[i][7]).split(', ');
+        for (var j = 0; j < medias.length; j++) {
+          if (!medias[j]) continue;
+          mediaSets.push({
+            media:       medias[j],
+            issue:       issues[j]   || '',
+            theme:       themes[j]   || '',
+            releaseDate: relDates[j] || ''
+          });
+        }
+      }
+    }
+    if (rowCount === 0) return { found: false };
+    return { found: true, rowCount: rowCount, mediaSets: mediaSets };
+  } catch (e) {
+    return { found: false, error: e.message };
+  }
+}
+
+function addMediaSetToSlip(params) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
+    var s = String(params.slipNo);
+    while (s.length < 5) s = '0' + s;
+
+    var lastDataRow = getLastDataRow(sheet);
+    if (lastDataRow <= 1) return { success: false, message: '該当データがありません。' };
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 8).getValues();
+
+    var updated = 0;
+    for (var i = 0; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      var rowSlip = String(data[i][0]);
+      while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
+      if (rowSlip !== s) continue;
+
+      var r = i + 2;
+      var sep = ', ';
+      var append = function(col, val) {
+        var current = cellToStr(sheet.getRange(r, col).getValue());
+        sheet.getRange(r, col).setValue(current ? current + sep + val : val);
+      };
+      append(5, params.mediaSet.media);
+      append(6, params.mediaSet.issue);
+      append(7, params.mediaSet.theme);
+      append(8, params.mediaSet.releaseDate);
+      updated++;
+    }
+    if (updated === 0) return { success: false, message: '該当する伝票番号が見つかりませんでした。' };
+    return { success: true, updated: updated };
+  } catch (e) {
+    return { success: false, message: 'エラー: ' + e.message };
+  }
 }
 
 function openReturnDialog() {
