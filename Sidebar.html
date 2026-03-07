@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: #333; background: #f9f9f9; }
+    .section { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; margin: 8px; }
+    .section-title { font-weight: bold; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+    label { display: block; font-size: 12px; color: #555; margin-bottom: 3px; margin-top: 8px; }
+    label:first-of-type { margin-top: 0; }
+    input[type=text], input[type=date], input[type=number] {
+      width: 100%; padding: 7px 9px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
+      transition: border-color 0.2s;
+    }
+    input:focus { outline: none; border-color: #4a90d9; }
+    .media-set {
+      padding: 10px; background: #f7f9fc; border: 1px solid #dce7f5;
+      border-radius: 5px; margin-bottom: 8px; position: relative;
+    }
+    .media-set-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .media-set-grid .full { grid-column: 1 / -1; }
+    .item-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+      padding: 10px; background: #f7f9fc; border: 1px solid #dce7f5;
+      border-radius: 5px; margin-bottom: 8px; position: relative;
+    }
+    .item-row .full { grid-column: 1 / -1; }
+    .remove-btn {
+      position: absolute; top: 6px; right: 8px;
+      background: none; border: none; color: #cc0000; font-size: 16px;
+      cursor: pointer; line-height: 1; padding: 0 4px;
+    }
+    .remove-btn:hover { color: #990000; }
+    .add-btn {
+      width: 100%; padding: 8px; background: #e8f0fe; color: #1a56db;
+      border: 1px dashed #93b4f5; border-radius: 4px; cursor: pointer;
+      font-size: 13px; margin-top: 2px; transition: background 0.2s;
+    }
+    .add-btn:hover { background: #d0e1fd; }
+    .submit-btn {
+      width: calc(100% - 16px); margin: 8px; padding: 12px;
+      background: #1a56db; color: #fff; border: none; border-radius: 6px;
+      font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+    }
+    .submit-btn:hover { background: #1545b3; }
+    .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .result-box {
+      margin: 8px; padding: 12px; background: #e6f4ea; border: 1px solid #aad4b2;
+      border-radius: 6px; display: none;
+    }
+    .result-box.error { background: #fce8e6; border-color: #f5c6c3; }
+    .result-title { font-weight: bold; margin-bottom: 8px; color: #1e6b2e; }
+    .result-box.error .result-title { color: #c0392b; }
+    textarea.msg-text {
+      width: 100%; height: 160px; font-size: 12px; font-family: monospace;
+      border: 1px solid #ccc; border-radius: 4px; padding: 8px; resize: vertical;
+    }
+    .copy-btn {
+      margin-top: 6px; padding: 6px 14px; background: #fff; border: 1px solid #1a56db;
+      color: #1a56db; border-radius: 4px; cursor: pointer; font-size: 12px;
+    }
+    .copy-btn:hover { background: #e8f0fe; }
+    .copied { color: #1e6b2e; font-size: 12px; margin-left: 8px; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="section">
+  <div class="section-title">スタイリスト情報</div>
+  <label>スタイリスト名 <span style="color:red">*</span></label>
+  <input type="text" id="stylist" placeholder="例：石上 恵">
+  <label>電話番号</label>
+  <input type="text" id="phone" placeholder="例：090-1234-5678">
+</div>
+
+<div class="section">
+  <div class="section-title">媒体セット <span style="color:red">*</span></div>
+  <div id="mediaSetList"></div>
+  <button class="add-btn" onclick="addMediaSet()">＋ 媒体セットを追加</button>
+</div>
+
+<div class="section">
+  <div class="section-title">撮影情報</div>
+  <label>撮影日</label>
+  <input type="date" id="shootDate">
+  <label>返却予定日</label>
+  <input type="date" id="plannedReturnDate">
+</div>
+
+<div class="section">
+  <div class="section-title">貸出アイテム <span style="color:red">*</span></div>
+  <div id="itemList"></div>
+  <button class="add-btn" onclick="addItem()">＋ アイテムを追加</button>
+</div>
+
+<button class="submit-btn" id="submitBtn" onclick="submit()">登録する</button>
+
+<div class="result-box" id="resultBox">
+  <div class="result-title" id="resultTitle"></div>
+  <div id="resultMsg"></div>
+  <textarea class="msg-text" id="msgText" readonly></textarea>
+  <div>
+    <button class="copy-btn" onclick="copyMsg()">テキストをコピー</button>
+    <span class="copied" id="copiedMsg">コピーしました！</span>
+  </div>
+</div>
+
+<script>
+  var mediaSetCount = 0;
+  var itemCount = 0;
+
+  function addMediaSet() {
+    mediaSetCount++;
+    var id = 'ms_' + mediaSetCount;
+    var div = document.createElement('div');
+    div.className = 'media-set';
+    div.id = id;
+    div.innerHTML =
+      '<button class="remove-btn" onclick="removeEl(\'' + id + '\')" title="削除">✕</button>' +
+      '<div class="media-set-grid">' +
+        '<div class="full"><label>媒体名 <span style="color:red">*</span></label>' +
+          '<input type="text" id="' + id + '_media" placeholder="例：Vogue"></div>' +
+        '<div><label>月号</label>' +
+          '<input type="text" id="' + id + '_issue" placeholder="例：4月号"></div>' +
+        '<div><label>公開日</label>' +
+          '<input type="date" id="' + id + '_releaseDate"></div>' +
+        '<div class="full"><label>テーマ/着用者</label>' +
+          '<input type="text" id="' + id + '_theme" placeholder="例：夏コーデ/石上恵"></div>' +
+      '</div>';
+    document.getElementById('mediaSetList').appendChild(div);
+  }
+
+  function addItem() {
+    itemCount++;
+    var id = 'item_' + itemCount;
+    var div = document.createElement('div');
+    div.className = 'item-row';
+    div.id = id;
+    div.innerHTML =
+      '<button class="remove-btn" onclick="removeEl(\'' + id + '\')" title="削除">✕</button>' +
+      '<div class="full"><label>ブランド</label>' +
+        '<input type="text" id="' + id + '_brand" placeholder="例：UNTITLED"></div>' +
+      '<div class="full"><label>品番</label>' +
+        '<input type="text" id="' + id + '_code" placeholder="例：62AFP349"></div>' +
+      '<div><label>色番</label>' +
+        '<input type="text" id="' + id + '_color" placeholder="例：(1)ベージュ"></div>' +
+      '<div><label>単価</label>' +
+        '<input type="number" id="' + id + '_price" placeholder="60500" min="0"></div>' +
+      '<div class="full"><label>アイテム名</label>' +
+        '<input type="text" id="' + id + '_name" placeholder="例：スラブツイードギャバジン"></div>';
+    document.getElementById('itemList').appendChild(div);
+  }
+
+  function removeEl(id) {
+    var el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function getMediaSets() {
+    var sets = [];
+    document.querySelectorAll('#mediaSetList .media-set').forEach(function(el) {
+      var id = el.id;
+      var media = (document.getElementById(id + '_media') || {}).value || '';
+      if (!media.trim()) return;
+      sets.push({
+        media:       media.trim(),
+        issue:       ((document.getElementById(id + '_issue') || {}).value || '').trim(),
+        theme:       ((document.getElementById(id + '_theme') || {}).value || '').trim(),
+        releaseDate: (document.getElementById(id + '_releaseDate') || {}).value || ''
+      });
+    });
+    return sets;
+  }
+
+  function getItems() {
+    var items = [];
+    document.querySelectorAll('#itemList .item-row').forEach(function(row) {
+      var id = row.id;
+      var code = ((document.getElementById(id + '_code') || {}).value || '').trim();
+      var name = ((document.getElementById(id + '_name') || {}).value || '').trim();
+      if (!code && !name) return;
+      items.push({
+        brand:     ((document.getElementById(id + '_brand') || {}).value || '').trim(),
+        itemCode:  code,
+        colorCode: ((document.getElementById(id + '_color') || {}).value || '').trim(),
+        itemName:  name,
+        price:     (document.getElementById(id + '_price') || {}).value || ''
+      });
+    });
+    return items;
+  }
+
+  function submit() {
+    var stylist = document.getElementById('stylist').value.trim();
+    if (!stylist) { alert('スタイリスト名を入力してください。'); return; }
+    var mediaSets = getMediaSets();
+    if (mediaSets.length === 0) { alert('媒体セットを1つ以上追加してください。'); return; }
+    var items = getItems();
+    if (items.length === 0) { alert('アイテムを1つ以上追加してください。'); return; }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '登録中...';
+
+    var data = {
+      stylist:            stylist,
+      phone:              document.getElementById('phone').value.trim(),
+      mediaSets:          mediaSets,
+      shootDate:          document.getElementById('shootDate').value,
+      plannedReturnDate:  document.getElementById('plannedReturnDate').value,
+      items:              items
+    };
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.textContent = '登録する';
+        showResult(res);
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.textContent = '登録する';
+        showResult({ success: false, message: 'システムエラー: ' + err.message });
+      })
+      .registerLoan(data);
+  }
+
+  function showResult(res) {
+    var box = document.getElementById('resultBox');
+    var title = document.getElementById('resultTitle');
+    var msgDiv = document.getElementById('resultMsg');
+    var msgText = document.getElementById('msgText');
+
+    box.style.display = 'block';
+    if (res.success) {
+      box.className = 'result-box';
+      title.textContent = '登録完了！伝票番号: ' + res.slipNo;
+      msgDiv.textContent = 'スタイリストへの送信テキスト：';
+      msgText.style.display = 'block';
+      msgText.value = res.message;
+    } else {
+      box.className = 'result-box error';
+      title.textContent = 'エラー';
+      msgDiv.textContent = res.message;
+      msgText.style.display = 'none';
+    }
+    box.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function copyMsg() {
+    var el = document.getElementById('msgText');
+    el.select();
+    document.execCommand('copy');
+    var copied = document.getElementById('copiedMsg');
+    copied.style.display = 'inline';
+    setTimeout(function() { copied.style.display = 'none'; }, 2000);
+  }
+
+  // 初期表示
+  addMediaSet();
+  addItem();
+</script>
+</body>
+</html>
