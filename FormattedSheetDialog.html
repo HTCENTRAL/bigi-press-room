@@ -9,9 +9,14 @@
     label { width: 70px; font-weight: bold; color: #555; flex-shrink: 0; }
     select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: #fff; }
     button { padding: 10px 28px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
-    #btnGenerate { background: #FF9900; color: #fff; font-weight: bold; }
-    #btnGenerate:hover { background: #e68a00; }
-    #btnGenerate:disabled { background: #ccc; cursor: default; }
+    #btnNext { background: #FF9900; color: #fff; font-weight: bold; }
+    #btnNext:hover { background: #e68a00; }
+    #step2 { display: none; margin-top: 18px; }
+    #step2 p { margin: 0 0 14px; font-weight: bold; color: #333; }
+    .split-btns { display: flex; gap: 10px; }
+    .split-btns button { background: #555; color: #fff; }
+    .split-btns button:hover { background: #333; }
+    .split-btns button:disabled { background: #ccc; cursor: default; }
     #msg { margin-top: 16px; padding: 10px 14px; border-radius: 4px; display: none; font-size: 13px; }
     .ok  { background: #e6f4ea; color: #2d6a2d; border: 1px solid #a8d5b5; }
     .err { background: #fdecea; color: #922; border: 1px solid #f5c6c6; }
@@ -29,7 +34,14 @@
     <select id="selMonth"></select>
   </div>
   <div class="row" style="margin-top:6px;">
-    <button id="btnGenerate" onclick="generate()">シートを生成</button>
+    <button id="btnNext" onclick="goStep2()">次へ</button>
+  </div>
+  <div id="step2">
+    <p>ブランド別に分割しますか？</p>
+    <div class="split-btns">
+      <button id="btnSplit" onclick="doGenerate(true)">ブランド別に分割する</button>
+      <button id="btnNoSplit" onclick="doGenerate(false)">分割しない</button>
+    </div>
   </div>
   <div class="spinner" id="spinner">生成中...</div>
   <div id="msg"></div>
@@ -55,17 +67,24 @@
       }
     })();
 
-    function generate() {
+    function goStep2() {
+      document.getElementById('btnNext').disabled = true;
+      document.getElementById('step2').style.display = 'block';
+    }
+
+    function doGenerate(splitByBrand) {
       var year  = Number(document.getElementById('selYear').value);
       var month = Number(document.getElementById('selMonth').value);
-      document.getElementById('btnGenerate').disabled = true;
+      document.getElementById('btnSplit').disabled = true;
+      document.getElementById('btnNoSplit').disabled = true;
       document.getElementById('spinner').style.display = 'block';
       document.getElementById('msg').style.display = 'none';
 
       google.script.run
         .withSuccessHandler(function(res) {
           document.getElementById('spinner').style.display = 'none';
-          document.getElementById('btnGenerate').disabled = false;
+          document.getElementById('btnSplit').disabled = false;
+          document.getElementById('btnNoSplit').disabled = false;
           var msgEl = document.getElementById('msg');
           if (res.success) {
             msgEl.className = 'ok';
@@ -78,13 +97,14 @@
         })
         .withFailureHandler(function(err) {
           document.getElementById('spinner').style.display = 'none';
-          document.getElementById('btnGenerate').disabled = false;
+          document.getElementById('btnSplit').disabled = false;
+          document.getElementById('btnNoSplit').disabled = false;
           var msgEl = document.getElementById('msg');
           msgEl.className = 'err';
           msgEl.textContent = 'エラー: ' + err.message;
           msgEl.style.display = 'block';
         })
-        .generateFormattedSheet({ year: year, month: month });
+        .generateFormattedSheet({ year: year, month: month, splitByBrand: splitByBrand });
     }
   </script>
 </body>

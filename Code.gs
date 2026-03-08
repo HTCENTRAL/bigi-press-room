@@ -20,7 +20,6 @@ function onOpen() {
     .addItem('返却処理', 'openReturnDialog')
     .addItem('媒体セット追加', 'openMediaSetDialog')
     .addSeparator()
-    .addItem('月末配信', 'openEmailDialog')
     .addItem('整形シート生成', 'openFormattedSheetDialog')
     .addToUi();
 }
@@ -60,7 +59,7 @@ function setupSheets() {
 
   var pubSheet = ss.getSheetByName(SHEET_PUBLISH);
   if (!pubSheet) pubSheet = ss.insertSheet(SHEET_PUBLISH);
-  var pubHeaders = ['雑誌名', '種別', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク'];
+  var pubHeaders = ['雑誌名', '種別', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', 'ブランド名', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク'];
   pubSheet.getRange(1, 1, 1, pubHeaders.length).setValues([pubHeaders]);
   pubSheet.getRange(1, 1, 1, pubHeaders.length)
     .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
@@ -69,9 +68,6 @@ function setupSheets() {
   var settingsSheet = ss.getSheetByName(SHEET_SETTINGS);
   if (!settingsSheet) {
     settingsSheet = ss.insertSheet(SHEET_SETTINGS);
-    settingsSheet.getRange('A1').setValue('月末配信先メールアドレス（1行1アドレス）');
-    settingsSheet.getRange('A1').setFontWeight('bold');
-    settingsSheet.getRange('A2').setValue('example@example.com');
   }
   // ブランド名セル（既存設定シートにも追記）
   if (!settingsSheet.getRange('A3').getValue()) {
@@ -354,9 +350,9 @@ function processPublish(params) {
       var c = params.combinations[i];
       loanSheet.getRange(c.rowIndex, 19).setValue(true); // S列（掲載済）
       var pubLastRow = pubSheet.getLastRow() + 1;
-      pubSheet.getRange(pubLastRow, 1, 1, 12).setValues([[
+      pubSheet.getRange(pubLastRow, 1, 1, 13).setValues([[
         c.media, c.type, c.issue, c.releaseDate, c.theme, c.stylist,
-        c.itemCode, c.colorCode, c.price, c.itemName, '', ''
+        c.brand || '', c.itemCode, c.colorCode, c.price, c.itemName, '', ''
       ]]);
     }
     return { success: true };
@@ -365,17 +361,11 @@ function processPublish(params) {
   }
 }
 
-function openEmailDialog() {
-  var html = HtmlService.createHtmlOutputFromFile('EmailDialog')
-    .setWidth(600).setHeight(450);
-  SpreadsheetApp.getUi().showModalDialog(html, '月末配信');
-}
-
 function getPublishDataForMonth(year, month) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
   var lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
-  var data = sheet.getRange(2, 1, lastRow - 1, 12).getValues();
+  var data = sheet.getRange(2, 1, lastRow - 1, 13).getValues();
   var results = [];
   for (var i = 0; i < data.length; i++) {
     var row = data[i];
@@ -397,78 +387,17 @@ function getPublishDataForMonth(year, month) {
         releaseDate: rdStr,
         theme:       cellToStr(row[4]),
         stylist:     cellToStr(row[5]),
-        itemCode:    cellToStr(row[6]),
-        colorCode:   cellToStr(row[7]),
-        price:       row[8] ? Number(row[8]) : 0,
-        itemName:    cellToStr(row[9]),
-        page:        cellToStr(row[10]),
-        imageLink:   cellToStr(row[11])
+        brand:       cellToStr(row[6]),
+        itemCode:    cellToStr(row[7]),
+        colorCode:   cellToStr(row[8]),
+        price:       row[9] ? Number(row[9]) : 0,
+        itemName:    cellToStr(row[10]),
+        page:        cellToStr(row[11]),
+        imageLink:   cellToStr(row[12])
       });
     }
   }
   return results;
-}
-
-function getEmailRecipients() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SETTINGS);
-  if (!sheet) return [];
-  var lastRow = sheet.getLastRow();
-  if (lastRow <= 1) return [];
-  var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-  var result = [];
-  for (var i = 0; i < data.length; i++) {
-    var addr = String(data[i][0]).trim();
-    if (addr && addr.indexOf('@') >= 0) result.push(addr);
-  }
-  return result;
-}
-
-function sendMonthlyEmail(params) {
-  try {
-    var subject = params.year + '年' + params.month + '月 掲載情報（BIGI PRESS ROOM）';
-    var htmlBody = buildEmailHtml(params.year, params.month, params.items);
-    if (!params.recipients || params.recipients.length === 0) {
-      return { success: false, message: '送信先が設定されていません。' };
-    }
-    for (var i = 0; i < params.recipients.length; i++) {
-      MailApp.sendEmail({ to: params.recipients[i], subject: subject, htmlBody: htmlBody });
-    }
-    return { success: true, count: params.recipients.length };
-  } catch (e) {
-    return { success: false, message: 'メール送信エラー: ' + e.message };
-  }
-}
-
-function buildEmailHtml(year, month, items) {
-  var rows = '';
-  for (var i = 0; i < items.length; i++) {
-    var item = items[i];
-    var priceStr = item.price ? ('¥' + Number(item.price).toLocaleString()) : '';
-    rows += '<tr>' +
-      '<td>' + item.media + '</td>' +
-      '<td>' + (item.type || '') + '</td>' +
-      '<td>' + item.issue + '</td>' +
-      '<td>' + item.releaseDate + '</td>' +
-      '<td>' + item.theme + '</td>' +
-      '<td>' + item.stylist + '</td>' +
-      '<td>' + item.itemCode + '</td>' +
-      '<td>' + item.colorCode + '</td>' +
-      '<td>' + priceStr + '</td>' +
-      '<td>' + item.itemName + '</td>' +
-      '<td>' + item.page + '</td>' +
-      '<td>' + (item.imageLink || '') + '</td>' +
-      '</tr>';
-  }
-  return '<html><body style="font-family:sans-serif;">' +
-    '<h2>' + year + '年' + month + '月 掲載情報</h2>' +
-    '<p>BIGI PRESS ROOMより掲載情報をお送りします。</p>' +
-    '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">' +
-    '<thead style="background:#4a4a4a;color:#fff;">' +
-    '<tr><th>雑誌名</th><th>種別</th><th>掲載号</th><th>公開日</th><th>テーマ/着用者</th>' +
-    '<th>スタイリスト</th><th>品番</th><th>色番</th><th>上代</th><th>アイテム</th><th>頁</th><th>画像/リンク</th></tr>' +
-    '</thead><tbody>' + rows + '</tbody></table>' +
-    '<br><p style="color:#666;font-size:12px;">BIGI PRESS ROOM</p>' +
-    '</body></html>';
 }
 
 function testGetLastDataRow() {
@@ -488,7 +417,7 @@ function getBrandName() {
 
 function openFormattedSheetDialog() {
   var html = HtmlService.createHtmlOutputFromFile('FormattedSheetDialog')
-    .setWidth(400).setHeight(320);
+    .setWidth(400).setHeight(420);
   SpreadsheetApp.getUi().showModalDialog(html, '整形シート生成');
 }
 
@@ -496,6 +425,7 @@ function generateFormattedSheet(params) {
   try {
     var year  = Number(params.year);
     var month = Number(params.month);
+    var splitByBrand = params.splitByBrand === true;
     var items = getPublishDataForMonth(year, month);
     var brandName = getBrandName();
     var monthLabel = month + '月';
@@ -511,88 +441,141 @@ function generateFormattedSheet(params) {
     }
 
     var currentRow = 1;
-    var colWidths = [120, 70, 55, 200, 100, 90, 90, 70, 200, 50];
 
-    TYPE_ORDER.forEach(function(type) {
-      var typeItems = items.filter(function(it) { return it.type === type; });
-      if (typeItems.length === 0) return;
+    if (!splitByBrand) {
+      // ===== 分割なし（既存処理・10列）=====
+      var colWidths = [120, 70, 55, 200, 100, 90, 90, 70, 200, 50];
 
-      // 公開日昇順ソート
-      typeItems.sort(function(a, b) {
-        var da = a.releaseDate ? new Date(a.releaseDate) : new Date(0);
-        var db = b.releaseDate ? new Date(b.releaseDate) : new Date(0);
-        return da - db;
-      });
+      TYPE_ORDER.forEach(function(type) {
+        var typeItems = items.filter(function(it) { return it.type === type; });
+        if (typeItems.length === 0) return;
 
-      var config = TYPE_CONFIG[type];
-
-      // ヘッダー行1（オレンジ）
-      var h1Range = outSheet.getRange(currentRow, 1, 1, 10);
-      h1Range.setBackground('#FF9900');
-      outSheet.getRange(currentRow, 1).setValue(brandName);
-      outSheet.getRange(currentRow, 4).setValue(monthLabel);
-      outSheet.getRange(currentRow, 8).setValue(config.title);
-      currentRow++;
-
-      // ヘッダー行2（薄オレンジ・太字）
-      var headers = [config.col1, '掲載号', '発売日', 'テーマ', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁'];
-      var h2Range = outSheet.getRange(currentRow, 1, 1, 10);
-      h2Range.setValues([headers]).setBackground('#FFD9B3').setFontWeight('bold');
-      currentRow++;
-
-      var prevMedia = null;
-      var prevValues = [null, null, null, null, null, null, null, null, null, null];
-
-      typeItems.forEach(function(item) {
-        // 媒体変わり目に空白行
-        if (prevMedia !== null && prevMedia !== item.media) {
-          currentRow++;
-          prevValues = [null, null, null, null, null, null, null, null, null, null];
-        }
-
-        // M/D形式の発売日
-        var relDateMD = '';
-        if (item.releaseDate) {
-          var d = new Date(item.releaseDate);
-          relDateMD = (d.getMonth() + 1) + '/' + d.getDate();
-        }
-
-        var row = [
-          item.media,
-          item.issue,
-          relDateMD,
-          item.theme,
-          item.stylist,
-          item.itemCode,
-          item.colorCode,
-          item.price || '',
-          item.itemName,
-          item.page
-        ];
-
-        // 列単位重複除去（媒体グループ内）
-        var outputRow = row.map(function(v, i) {
-          if (v !== '' && v !== null && v !== undefined && String(v) === String(prevValues[i])) return '';
-          return v;
+        typeItems.sort(function(a, b) {
+          var da = a.releaseDate ? new Date(a.releaseDate) : new Date(0);
+          var db = b.releaseDate ? new Date(b.releaseDate) : new Date(0);
+          return da - db;
         });
 
-        var rowRange = outSheet.getRange(currentRow, 1, 1, 10);
-        rowRange.setValues([outputRow]);
+        var config = TYPE_CONFIG[type];
 
-        // 上代（col8 = index7）を数値フォーマット
-        if (row[7] !== '') {
-          outSheet.getRange(currentRow, 8).setNumberFormat('¥#,##0');
-        }
-
-        prevValues = row;
-        prevMedia = item.media;
+        var h1Range = outSheet.getRange(currentRow, 1, 1, 10);
+        h1Range.setBackground('#FF9900');
+        outSheet.getRange(currentRow, 1).setValue(brandName);
+        outSheet.getRange(currentRow, 4).setValue(monthLabel);
+        outSheet.getRange(currentRow, 8).setValue(config.title);
         currentRow++;
-      });
-    });
 
-    // 列幅設定
-    for (var ci = 0; ci < colWidths.length; ci++) {
-      outSheet.setColumnWidth(ci + 1, colWidths[ci]);
+        var headers = [config.col1, '掲載号', '発売日', 'テーマ', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁'];
+        outSheet.getRange(currentRow, 1, 1, 10).setValues([headers]).setBackground('#FFD9B3').setFontWeight('bold');
+        currentRow++;
+
+        var prevMedia = null;
+        var prevValues = [null, null, null, null, null, null, null, null, null, null];
+
+        typeItems.forEach(function(item) {
+          if (prevMedia !== null && prevMedia !== item.media) {
+            currentRow++;
+            prevValues = [null, null, null, null, null, null, null, null, null, null];
+          }
+
+          var relDateMD = '';
+          if (item.releaseDate) {
+            var d = new Date(item.releaseDate);
+            relDateMD = (d.getMonth() + 1) + '/' + d.getDate();
+          }
+
+          var row = [item.media, item.issue, relDateMD, item.theme, item.stylist,
+                     item.itemCode, item.colorCode, item.price || '', item.itemName, item.page];
+
+          var outputRow = row.map(function(v, i) {
+            if (v !== '' && v !== null && v !== undefined && String(v) === String(prevValues[i])) return '';
+            return v;
+          });
+
+          outSheet.getRange(currentRow, 1, 1, 10).setValues([outputRow]);
+          if (row[7] !== '') outSheet.getRange(currentRow, 8).setNumberFormat('¥#,##0');
+
+          prevValues = row;
+          prevMedia = item.media;
+          currentRow++;
+        });
+      });
+
+      for (var ci = 0; ci < colWidths.length; ci++) {
+        outSheet.setColumnWidth(ci + 1, colWidths[ci]);
+      }
+
+    } else {
+      // ===== ブランド別分割（11列）=====
+      var colWidths11 = [90, 120, 70, 55, 200, 100, 90, 90, 70, 200, 50];
+
+      // ブランド名を出現順にユニーク化
+      var brands = [];
+      items.forEach(function(it) {
+        if (brands.indexOf(it.brand) === -1) brands.push(it.brand);
+      });
+
+      brands.forEach(function(brand) {
+        TYPE_ORDER.forEach(function(type) {
+          var brandTypeItems = items.filter(function(it) { return it.brand === brand && it.type === type; });
+          if (brandTypeItems.length === 0) return;
+
+          brandTypeItems.sort(function(a, b) {
+            var da = a.releaseDate ? new Date(a.releaseDate) : new Date(0);
+            var db = b.releaseDate ? new Date(b.releaseDate) : new Date(0);
+            return da - db;
+          });
+
+          var config = TYPE_CONFIG[type];
+
+          // タイトル行（オレンジ・11列）
+          outSheet.getRange(currentRow, 1, 1, 11).setBackground('#FF9900');
+          outSheet.getRange(currentRow, 1).setValue(brand);
+          outSheet.getRange(currentRow, 5).setValue(monthLabel);
+          outSheet.getRange(currentRow, 9).setValue(config.title);
+          currentRow++;
+
+          // ヘッダー行（薄オレンジ・11列）
+          var headers11 = ['ブランド名', config.col1, '掲載号', '発売日', 'テーマ', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁'];
+          outSheet.getRange(currentRow, 1, 1, 11).setValues([headers11]).setBackground('#FFD9B3').setFontWeight('bold');
+          currentRow++;
+
+          var prevMedia = null;
+          var prevValues = [null, null, null, null, null, null, null, null, null, null, null];
+
+          brandTypeItems.forEach(function(item) {
+            if (prevMedia !== null && prevMedia !== item.media) {
+              currentRow++;
+              prevValues = [null, null, null, null, null, null, null, null, null, null, null];
+            }
+
+            var relDateMD = '';
+            if (item.releaseDate) {
+              var d = new Date(item.releaseDate);
+              relDateMD = (d.getMonth() + 1) + '/' + d.getDate();
+            }
+
+            var row = [item.brand, item.media, item.issue, relDateMD, item.theme, item.stylist,
+                       item.itemCode, item.colorCode, item.price || '', item.itemName, item.page];
+
+            var outputRow = row.map(function(v, i) {
+              if (v !== '' && v !== null && v !== undefined && String(v) === String(prevValues[i])) return '';
+              return v;
+            });
+
+            outSheet.getRange(currentRow, 1, 1, 11).setValues([outputRow]);
+            if (row[8] !== '') outSheet.getRange(currentRow, 9).setNumberFormat('¥#,##0');
+
+            prevValues = row;
+            prevMedia = item.media;
+            currentRow++;
+          });
+        });
+      });
+
+      for (var ci = 0; ci < colWidths11.length; ci++) {
+        outSheet.setColumnWidth(ci + 1, colWidths11[ci]);
+      }
     }
 
     return { success: true, sheetName: sheetName, rowCount: currentRow - 1 };
