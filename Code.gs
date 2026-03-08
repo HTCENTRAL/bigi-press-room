@@ -346,10 +346,11 @@ function processPublish(params) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var loanSheet = ss.getSheetByName(SHEET_LOAN);
     var pubSheet = ss.getSheetByName(SHEET_PUBLISH);
+    var pubLastRow = pubSheet.getLastRow();
     for (var i = 0; i < params.combinations.length; i++) {
       var c = params.combinations[i];
       loanSheet.getRange(c.rowIndex, 19).setValue(true); // S列（掲載済）
-      var pubLastRow = pubSheet.getLastRow() + 1;
+      pubLastRow++;
       pubSheet.getRange(pubLastRow, 1, 1, 13).setValues([[
         c.media, c.type, c.issue, c.releaseDate, c.theme, c.stylist,
         c.brand || '', c.itemCode, c.colorCode, c.price, c.itemName, '', ''
@@ -492,12 +493,15 @@ function generateFormattedSheet(params) {
             return v;
           });
 
-          outSheet.getRange(currentRow, 1, 1, 10).setValues([outputRow]);
-          if (row[7] !== '') outSheet.getRange(currentRow, 8).setNumberFormat('¥#,##0');
-
           prevValues = row;
           prevMedia = item.media;
-          currentRow++;
+
+          var allEmpty = outputRow.every(function(v) { return v === '' || v === null || v === undefined; });
+          if (!allEmpty) {
+            outSheet.getRange(currentRow, 1, 1, 10).setValues([outputRow]);
+            if (row[7] !== '') outSheet.getRange(currentRow, 8).setNumberFormat('¥#,##0');
+            currentRow++;
+          }
         });
       });
 
@@ -507,7 +511,7 @@ function generateFormattedSheet(params) {
 
     } else {
       // ===== ブランド別分割（11列）=====
-      var colWidths11 = [90, 120, 70, 55, 200, 100, 90, 90, 70, 200, 50];
+      var colWidths11 = [120, 70, 55, 200, 100, 90, 90, 70, 200, 50];
 
       // ブランド名を出現順にユニーク化
       var brands = [];
@@ -528,25 +532,25 @@ function generateFormattedSheet(params) {
 
           var config = TYPE_CONFIG[type];
 
-          // タイトル行（オレンジ・11列）
-          outSheet.getRange(currentRow, 1, 1, 11).setBackground('#FF9900');
+          // タイトル行（オレンジ・10列）
+          outSheet.getRange(currentRow, 1, 1, 10).setBackground('#FF9900');
           outSheet.getRange(currentRow, 1).setValue(brand);
-          outSheet.getRange(currentRow, 5).setValue(monthLabel);
-          outSheet.getRange(currentRow, 9).setValue(config.title);
+          outSheet.getRange(currentRow, 4).setValue(monthLabel);
+          outSheet.getRange(currentRow, 8).setValue(config.title);
           currentRow++;
 
-          // ヘッダー行（薄オレンジ・11列）
-          var headers11 = ['ブランド名', config.col1, '掲載号', '発売日', 'テーマ', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁'];
-          outSheet.getRange(currentRow, 1, 1, 11).setValues([headers11]).setBackground('#FFD9B3').setFontWeight('bold');
+          // ヘッダー行（薄オレンジ・10列）
+          var headers11 = [config.col1, '掲載号', '発売日', 'テーマ', 'スタイリスト', '品番', '色番', '上代', 'アイテム', '頁'];
+          outSheet.getRange(currentRow, 1, 1, 10).setValues([headers11]).setBackground('#FFD9B3').setFontWeight('bold');
           currentRow++;
 
           var prevMedia = null;
-          var prevValues = [null, null, null, null, null, null, null, null, null, null, null];
+          var prevValues = [null, null, null, null, null, null, null, null, null, null];
 
           brandTypeItems.forEach(function(item) {
             if (prevMedia !== null && prevMedia !== item.media) {
               currentRow++;
-              prevValues = [null, null, null, null, null, null, null, null, null, null, null];
+              prevValues = [null, null, null, null, null, null, null, null, null, null];
             }
 
             var relDateMD = '';
@@ -555,7 +559,7 @@ function generateFormattedSheet(params) {
               relDateMD = (d.getMonth() + 1) + '/' + d.getDate();
             }
 
-            var row = [item.brand, item.media, item.issue, relDateMD, item.theme, item.stylist,
+            var row = [item.media, item.issue, relDateMD, item.theme, item.stylist,
                        item.itemCode, item.colorCode, item.price || '', item.itemName, item.page];
 
             var outputRow = row.map(function(v, i) {
@@ -563,12 +567,15 @@ function generateFormattedSheet(params) {
               return v;
             });
 
-            outSheet.getRange(currentRow, 1, 1, 11).setValues([outputRow]);
-            if (row[8] !== '') outSheet.getRange(currentRow, 9).setNumberFormat('¥#,##0');
-
             prevValues = row;
             prevMedia = item.media;
-            currentRow++;
+
+            var allEmpty = outputRow.every(function(v) { return v === '' || v === null || v === undefined; });
+            if (!allEmpty) {
+              outSheet.getRange(currentRow, 1, 1, 10).setValues([outputRow]);
+              if (row[7] !== '') outSheet.getRange(currentRow, 8).setNumberFormat('¥#,##0');
+              currentRow++;
+            }
           });
         });
       });
