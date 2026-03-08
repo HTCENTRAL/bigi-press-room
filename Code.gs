@@ -20,7 +20,7 @@ function onOpen() {
     .addItem('返却処理', 'openReturnDialog')
     .addItem('媒体セット追加', 'openMediaSetDialog')
     .addSeparator()
-    .addItem('整形シート生成', 'openFormattedSheetDialog')
+    .addItem('月次レポート', 'openFormattedSheetDialog')
     .addToUi();
 }
 
@@ -419,7 +419,7 @@ function getBrandName() {
 function openFormattedSheetDialog() {
   var html = HtmlService.createHtmlOutputFromFile('FormattedSheetDialog')
     .setWidth(400).setHeight(420);
-  SpreadsheetApp.getUi().showModalDialog(html, '整形シート生成');
+  SpreadsheetApp.getUi().showModalDialog(html, '月次レポート');
 }
 
 function generateFormattedSheet(params) {
@@ -430,7 +430,7 @@ function generateFormattedSheet(params) {
     var items = getPublishDataForMonth(year, month);
     var brandName = getBrandName();
     var monthLabel = month + '月';
-    var sheetName = '整形用_' + year + '年' + month + '月';
+    var sheetName = 'レポート_' + month + '月';
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var outSheet = ss.getSheetByName(sheetName);
