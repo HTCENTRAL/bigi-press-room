@@ -62,6 +62,18 @@
     }
     .copy-btn:hover { background: #e8f0fe; }
     .copied { color: #1e6b2e; font-size: 12px; margin-left: 8px; display: none; }
+    .print-btn {
+      margin-top: 8px; padding: 8px 16px; background: #e67e22; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;
+      display: block; width: 100%;
+    }
+    .print-btn:hover { background: #ca6f1e; }
+    .reset-btn {
+      padding: 8px 16px; background: #fff; color: #1a56db;
+      border: 1px solid #1a56db; border-radius: 4px; cursor: pointer;
+      font-size: 13px; font-weight: bold; white-space: nowrap;
+    }
+    .reset-btn:hover { background: #e8f0fe; }
   </style>
 </head>
 <body>
@@ -82,8 +94,6 @@
 
 <div class="section">
   <div class="section-title">撮影情報</div>
-  <label>撮影日</label>
-  <input type="date" id="shootDate">
   <label>返却予定日</label>
   <input type="date" id="plannedReturnDate">
 </div>
@@ -100,7 +110,7 @@
   <div class="result-title" id="resultTitle"></div>
   <div id="resultMsg"></div>
   <textarea class="msg-text" id="msgText" readonly></textarea>
-  <div>
+  <div id="copyArea">
     <button class="copy-btn" onclick="copyMsg()">テキストをコピー</button>
     <span class="copied" id="copiedMsg">コピーしました！</span>
   </div>
@@ -119,6 +129,13 @@
     div.innerHTML =
       '<button class="remove-btn" onclick="removeEl(\'' + id + '\')" title="削除">✕</button>' +
       '<div class="media-set-grid">' +
+        '<div class="full"><label>種別 <span style="color:red">*</span></label>' +
+          '<select id="' + id + '_type">' +
+            '<option value="雑誌(紙面)">雑誌(紙面)</option>' +
+            '<option value="雑誌(WEB)">雑誌(WEB)</option>' +
+            '<option value="TV">TV</option>' +
+            '<option value="その他">その他</option>' +
+          '</select></div>' +
         '<div class="full"><label>媒体名 <span style="color:red">*</span></label>' +
           '<input type="text" id="' + id + '_media" placeholder="例：Vogue"></div>' +
         '<div><label>月号</label>' +
@@ -127,13 +144,8 @@
           '<input type="date" id="' + id + '_releaseDate"></div>' +
         '<div class="full"><label>テーマ/着用者</label>' +
           '<input type="text" id="' + id + '_theme" placeholder="例：夏コーデ/石上恵"></div>' +
-        '<div class="full"><label>種別 <span style="color:red">*</span></label>' +
-          '<select id="' + id + '_type">' +
-            '<option value="雑誌(紙面)">雑誌(紙面)</option>' +
-            '<option value="雑誌(WEB)">雑誌(WEB)</option>' +
-            '<option value="TV">TV</option>' +
-            '<option value="その他">その他</option>' +
-          '</select></div>' +
+        '<div><label>撮影日</label>' +
+          '<input type="date" id="' + id + '_shootDate"></div>' +
       '</div>';
     document.getElementById('mediaSetList').appendChild(div);
   }
@@ -175,7 +187,8 @@
         issue:       ((document.getElementById(id + '_issue') || {}).value || '').trim(),
         theme:       ((document.getElementById(id + '_theme') || {}).value || '').trim(),
         releaseDate: (document.getElementById(id + '_releaseDate') || {}).value || '',
-        type:        (document.getElementById(id + '_type') || {}).value || ''
+        type:        (document.getElementById(id + '_type') || {}).value || '',
+        shootDate:   (document.getElementById(id + '_shootDate') || {}).value || ''
       });
     });
     return sets;
@@ -215,7 +228,6 @@
       stylist:            stylist,
       phone:              document.getElementById('phone').value.trim(),
       mediaSets:          mediaSets,
-      shootDate:          document.getElementById('shootDate').value,
       plannedReturnDate:  document.getElementById('plannedReturnDate').value,
       items:              items
     };
@@ -244,9 +256,14 @@
     if (res.success) {
       box.className = 'result-box';
       title.textContent = '登録完了！伝票番号: ' + res.slipNo;
-      msgDiv.textContent = 'スタイリストへの送信テキスト：';
-      msgText.style.display = 'block';
-      msgText.value = res.message;
+      msgDiv.innerHTML =
+        '<div style="display:flex;gap:8px;margin-top:4px;">' +
+          '<button class="print-btn" style="flex:1;" onclick="openPrintDialog(\'' + res.slipNo + '\')">伝票を作成・印刷</button>' +
+          '<button class="reset-btn" onclick="resetForm()">新規登録</button>' +
+        '</div>';
+      msgText.style.display = 'none';
+      document.getElementById('copyArea').style.display = 'none';
+      document.getElementById('submitBtn').style.display = 'none';
     } else {
       box.className = 'result-box error';
       title.textContent = 'エラー';
@@ -263,6 +280,25 @@
     var copied = document.getElementById('copiedMsg');
     copied.style.display = 'inline';
     setTimeout(function() { copied.style.display = 'none'; }, 2000);
+  }
+
+  function openPrintDialog(slipNo) {
+    google.script.run.openPrintSlipDialogWithNo(slipNo);
+  }
+
+  function resetForm() {
+    document.getElementById('stylist').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('plannedReturnDate').value = '';
+    document.getElementById('mediaSetList').innerHTML = '';
+    document.getElementById('itemList').innerHTML = '';
+    mediaSetCount = 0;
+    itemCount = 0;
+    document.getElementById('resultBox').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'block';
+    addMediaSet();
+    addItem();
+    window.scrollTo(0, 0);
   }
 
   // 初期表示

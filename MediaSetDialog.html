@@ -89,6 +89,8 @@
     <input type="text" id="newTheme" placeholder="例：夏コーデ/石上恵">
     <label>公開日</label>
     <input type="date" id="newReleaseDate">
+    <label>撮影日</label>
+    <input type="date" id="newShootDate">
   </div>
 
   <div class="footer">
@@ -139,7 +141,8 @@
         div.textContent = (i + 1) + '.  ' + (ms.type ? ms.type + ' / ' : '') + ms.media +
           (ms.issue ? ' / ' + ms.issue : '') +
           (ms.theme ? ' / ' + ms.theme : '') +
-          (ms.releaseDate ? ' / ' + ms.releaseDate : '');
+          (ms.releaseDate ? ' / ' + ms.releaseDate : '') +
+          (ms.shootDate ? ' / 撮影日:' + ms.shootDate : '');
         container.appendChild(div);
       });
     }
@@ -160,7 +163,8 @@
       type:        document.getElementById('newType').value,
       issue:       document.getElementById('newIssue').value.trim(),
       theme:       document.getElementById('newTheme').value.trim(),
-      releaseDate: document.getElementById('newReleaseDate').value
+      releaseDate: document.getElementById('newReleaseDate').value,
+      shootDate:   document.getElementById('newShootDate').value
     };
 
     google.script.run
@@ -171,7 +175,7 @@
           showMsg(res.updated + ' アイテム行に媒体セットを追加しました。', 'success');
           document.getElementById('addArea').style.display = 'none';
           // 入力をリセット
-          ['newMedia','newIssue','newTheme','newReleaseDate'].forEach(function(id) {
+          ['newMedia','newIssue','newTheme','newReleaseDate','newShootDate'].forEach(function(id) {
             document.getElementById(id).value = '';
           });
         } else {

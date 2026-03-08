@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* ===== 共通 ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: #333; }
+
+    /* ===== ダイアログUI（画面表示用） ===== */
+    .dialog-ui { padding: 14px; }
+    .row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    label { font-size: 12px; color: #555; white-space: nowrap; }
+    input[type=text] {
+      padding: 6px 9px; border: 1px solid #ccc; border-radius: 4px;
+      font-size: 13px; width: 130px;
+    }
+    input:focus { outline: none; border-color: #4a90d9; }
+    .fetch-btn {
+      padding: 7px 16px; background: #1a56db; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+    }
+    .fetch-btn:hover { background: #1545b3; }
+    .section { margin-bottom: 12px; }
+    .section-title {
+      font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase;
+      border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px;
+    }
+    .radio-group { display: flex; gap: 18px; }
+    .radio-group label { font-size: 13px; color: #333; display: flex; align-items: center; gap: 4px; }
+    .credit-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;
+    }
+    .credit-grid label { font-size: 12px; color: #333; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    .msg { padding: 8px 10px; border-radius: 4px; font-size: 12px; margin-bottom: 10px; }
+    .msg.info  { background: #e8f0fe; color: #1a56db; border: 1px solid #c5d7f7; }
+    .msg.error { background: #fce8e6; color: #c0392b; border: 1px solid #f5c6c3; }
+    .footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+    .print-btn {
+      padding: 8px 24px; background: #e67e22; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;
+    }
+    .print-btn:hover { background: #ca6f1e; }
+    .print-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .close-btn {
+      padding: 8px 18px; background: #fff; color: #555;
+      border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 13px;
+    }
+    #noData { display: none; }
+
+    /* ===== 印刷コンテンツ（画面では非表示） ===== */
+    .print-content { display: none; }
+
+    @media print {
+      .dialog-ui  { display: none !important; }
+      .print-content { display: block !important; }
+      body { font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 11pt; color: #000; }
+
+      .slip-header {
+        text-align: center; border-top: 2px solid #000; border-bottom: 2px solid #000;
+        padding: 6px 0; margin-bottom: 12px;
+      }
+      .slip-header h1 { font-size: 14pt; font-weight: bold; }
+      .info-row { display: flex; gap: 30px; margin-bottom: 6px; font-size: 10.5pt; }
+      .info-row span { display: inline-block; }
+      section { margin-bottom: 14px; }
+      section h2 {
+        font-size: 10.5pt; font-weight: bold; background: #eee;
+        padding: 3px 6px; margin-bottom: 6px; border-left: 3px solid #555;
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+      th { background: #ccc; padding: 4px 6px; border: 1px solid #999; text-align: left; }
+      td { padding: 4px 6px; border: 1px solid #ccc; vertical-align: top; }
+      .circled { text-align: center; font-size: 12pt; }
+      .credits-block { margin-bottom: 8px; font-size: 9.5pt; }
+      .credits-block .brand-name { font-weight: bold; }
+      .credits-block .detail { padding-left: 12px; }
+      .press-room { font-size: 9.5pt; }
+      .press-room .pr-name { font-weight: bold; }
+      .slip-footer {
+        margin-top: 14px; border-top: 2px solid #000; padding-top: 8px;
+        font-size: 9.5pt;
+      }
+      .sign-row { display: flex; gap: 40px; margin-top: 8px; }
+      .sign-row span { display: inline-block; border-bottom: 1px solid #000; width: 200px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== ダイアログUI ===== -->
+<div class="dialog-ui">
+
+  <div class="row">
+    <label>伝票番号：</label>
+    <input type="text" id="slipNo" placeholder="例：08878" maxlength="10">
+    <button class="fetch-btn" onclick="fetchData()">表示</button>
+  </div>
+
+  <div id="msgArea"></div>
+  <div id="noData" class="msg error">伝票データが見つかりません。</div>
+
+  <div id="mainArea" style="display:none;">
+    <div class="section">
+      <div class="section-title">PRESS ROOM</div>
+      <div class="radio-group" id="pressRoomGroup"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">クレジット（印刷に含めるブランドを選択）</div>
+      <div class="credit-grid" id="creditGrid"></div>
+    </div>
+
+    <div class="footer">
+      <button class="close-btn" onclick="google.script.host.close()">閉じる</button>
+      <button class="print-btn" onclick="doPrint()">印刷する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 印刷コンテンツ ===== -->
+<div class="print-content" id="printContent"></div>
+
+<script>
+  var CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+  var slipData = null;
+
+  // 初期化：PropertiesServiceから伝票番号を取得
+  google.script.run
+    .withSuccessHandler(function(no) {
+      if (no) {
+        document.getElementById('slipNo').value = no;
+        fetchData();
+      }
+    })
+    .getInitialSlipNo();
+
+  function showMsg(text, type) {
+    var el = document.getElementById('msgArea');
+    el.innerHTML = text ? '<div class="msg ' + type + '">' + text + '</div>' : '';
+  }
+
+  function fetchData() {
+    var no = document.getElementById('slipNo').value.trim();
+    if (!no) { showMsg('伝票番号を入力してください。', 'error'); return; }
+    showMsg('読み込み中...', 'info');
+    document.getElementById('mainArea').style.display = 'none';
+    document.getElementById('noData').style.display = 'none';
+
+    google.script.run
+      .withSuccessHandler(function(data) {
+        showMsg('', '');
+        if (!data.found) {
+          document.getElementById('noData').style.display = 'block';
+          return;
+        }
+        slipData = data;
+        renderControls(data);
+        document.getElementById('mainArea').style.display = 'block';
+      })
+      .withFailureHandler(function(err) {
+        showMsg('エラー: ' + err.message, 'error');
+      })
+      .getSlipDataAndCredits(no);
+  }
+
+  function renderControls(data) {
+    // PRESS ROOM ラジオボタン
+    var prGroup = document.getElementById('pressRoomGroup');
+    prGroup.innerHTML = '';
+    data.pressRooms.forEach(function(pr, i) {
+      var id = 'pr_' + i;
+      var lbl = document.createElement('label');
+      lbl.innerHTML = '<input type="radio" name="pressRoom" value="' + i + '"' +
+        (i === 0 ? ' checked' : '') + '> ' + pr.label;
+      prGroup.appendChild(lbl);
+    });
+
+    // クレジットチェックボックス
+    var grid = document.getElementById('creditGrid');
+    grid.innerHTML = '';
+    if (data.credits.length === 0) {
+      grid.innerHTML = '<span style="color:#999;font-size:12px;">クレジットマスタにデータがありません</span>';
+      return;
+    }
+    data.credits.forEach(function(cr, i) {
+      var id = 'cr_' + i;
+      var lbl = document.createElement('label');
+      lbl.innerHTML = '<input type="checkbox" id="' + id + '"> ' + cr.name;
+      grid.appendChild(lbl);
+    });
+  }
+
+  function doPrint() {
+    if (!slipData) return;
+
+    // 選択PRESS ROOM
+    var prRadio = document.querySelector('input[name="pressRoom"]:checked');
+    var selectedPR = prRadio ? slipData.pressRooms[parseInt(prRadio.value)] : null;
+
+    // 選択クレジット
+    var selectedCredits = slipData.credits.filter(function(cr, i) {
+      var cb = document.getElementById('cr_' + i);
+      return cb && cb.checked;
+    });
+
+    buildPrintContent(slipData, selectedPR, selectedCredits);
+    window.print();
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function buildPrintContent(d, pr, credits) {
+    var html = '';
+
+    // ヘッダー
+    html += '<div class="slip-header">' +
+      '<h1>貸出伝票　No.' + esc(d.slipNo) + '</h1>' +
+      '</div>';
+
+    // 基本情報
+    html += '<div class="info-row">' +
+      '<span>貸出日：' + esc(d.loanDate) + '</span>' +
+      '<span>返却予定日：' + esc(d.plannedReturnDate) + '</span>' +
+      '</div>';
+    html += '<div class="info-row">' +
+      '<span>スタイリスト：' + esc(d.stylist) + ' 様</span>' +
+      (d.phone ? '<span>TEL：' + esc(d.phone) + '</span>' : '') +
+      '</div>';
+
+    // 媒体セット
+    html += '<section><h2>媒体セット</h2>';
+    if (d.mediaSets.length > 0) {
+      html += '<table><thead><tr>' +
+        '<th style="width:28px;">NO</th><th>種別</th><th>媒体名</th><th>掲載号</th>' +
+        '<th>公開日</th><th>テーマ/着用者</th><th>撮影日</th>' +
+        '</tr></thead><tbody>';
+      d.mediaSets.forEach(function(m, i) {
+        var circ = CIRCLED[i] || (i + 1) + '.';
+        html += '<tr>' +
+          '<td class="circled">' + circ + '</td>' +
+          '<td>' + esc(m.type) + '</td>' +
+          '<td>' + esc(m.media) + '</td>' +
+          '<td>' + esc(m.issue) + '</td>' +
+          '<td>' + esc(m.releaseDate) + '</td>' +
+          '<td>' + esc(m.theme) + '</td>' +
+          '<td>' + esc(m.shootDate) + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<p>（媒体セットなし）</p>';
+    }
+    html += '</section>';
+
+    // 貸出アイテム
+    html += '<section><h2>貸出アイテム</h2>';
+    html += '<table><thead><tr>' +
+      '<th style="width:24px;">No</th><th>ブランド</th><th>品番</th>' +
+      '<th>色番</th><th>上代</th><th>アイテム名</th><th>掲載媒体No</th>' +
+      '</tr></thead><tbody>';
+    d.items.forEach(function(it, i) {
+      var priceStr = it.price ? '¥' + Number(it.price).toLocaleString() : '';
+      html += '<tr>' +
+        '<td style="text-align:center;">' + (i + 1) + '</td>' +
+        '<td>' + esc(it.brand) + '</td>' +
+        '<td>' + esc(it.itemCode) + '</td>' +
+        '<td>' + esc(it.colorCode) + '</td>' +
+        '<td>' + priceStr + '</td>' +
+        '<td>' + esc(it.itemName) + '</td>' +
+        '<td></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></section>';
+
+    // クレジット
+    if (credits.length > 0) {
+      html += '<section><h2>クレジット情報</h2>';
+      credits.forEach(function(cr) {
+        html += '<div class="credits-block">';
+        html += '<div class="brand-name">' + esc(cr.name) +
+          (cr.kana ? '（' + esc(cr.kana) + '）' : '') + '</div>';
+        var details = [];
+        if (cr.tel)         details.push('TEL: ' + esc(cr.tel));
+        if (cr.web)         details.push('OFFICIAL WEB SITE: ' + esc(cr.web));
+        if (cr.onlineStore) details.push('ONLINE STORE: ' + esc(cr.onlineStore));
+        if (cr.instagram)   details.push('Instagram: ' + esc(cr.instagram));
+        if (details.length > 0) {
+          html += '<div class="detail">' + details.join('　') + '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</section>';
+    }
+
+    // PRESS ROOM
+    if (pr) {
+      html += '<section><h2>PRESS ROOM</h2>';
+      html += '<div class="press-room">';
+      html += '<div class="pr-name">' + esc(pr.label) + '</div>';
+      if (pr.address) html += '<div>' + esc(pr.address) + '</div>';
+      var prDetail = [];
+      if (pr.tel) prDetail.push('TEL: ' + esc(pr.tel));
+      if (pr.fax) prDetail.push('FAX: ' + esc(pr.fax));
+      if (prDetail.length > 0) html += '<div>' + prDetail.join('　') + '</div>';
+      html += '</div></section>';
+    }
+
+    // フッター
+    html += '<div class="slip-footer">' +
+      'ご返却は10:00〜18:00（12:00〜13:00を除く）でお願いいたします。' +
+      '<div class="sign-row">' +
+      '<span>スタイリスト確認: </span>' +
+      '<span>日付: </span>' +
+      '</div></div>';
+
+    document.getElementById('printContent').innerHTML = html;
+  }
+</script>
+</body>
+</html>

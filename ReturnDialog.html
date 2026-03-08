@@ -251,10 +251,12 @@
       title.textContent = (item.brand ? item.brand + ' ' : '') + item.itemCode + ' ' + item.colorCode + ' ' + item.itemName;
       section.appendChild(title);
 
+      var CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+
       var table = document.createElement('table');
       table.className = 'pub-table';
       table.innerHTML =
-        '<thead><tr><th style="width:40px;">掲載</th><th>媒体名</th><th>種別</th><th>掲載号</th><th>テーマ/着用者</th><th>公開日</th></tr></thead>';
+        '<thead><tr><th style="width:28px;">NO</th><th style="width:40px;">掲載</th><th>種別</th><th>媒体名</th><th>掲載号</th><th>公開日</th><th>テーマ/着用者</th></tr></thead>';
       var tbody = document.createElement('tbody');
 
       medias.forEach(function(media, mIdx) {
@@ -263,14 +265,16 @@
         var theme    = themes[mIdx]   || '';
         var relDate  = relDates[mIdx] || '';
         var cbId = 'pcb_' + itemIdx + '_' + mIdx;
+        var circled = CIRCLED[mIdx] || (mIdx + 1) + '.';
         var tr = document.createElement('tr');
         tr.innerHTML =
+          '<td style="text-align:center;font-size:14px;">' + circled + '</td>' +
           '<td><input type="checkbox" id="' + cbId + '" checked></td>' +
-          '<td>' + media + '</td>' +
           '<td>' + type + '</td>' +
+          '<td>' + media + '</td>' +
           '<td>' + issue + '</td>' +
-          '<td>' + theme + '</td>' +
-          '<td>' + relDate + '</td>';
+          '<td>' + relDate + '</td>' +
+          '<td>' + theme + '</td>';
         tbody.appendChild(tr);
       });
 
@@ -302,6 +306,7 @@
             releaseDate: relDates[mIdx] || '',
             theme:       themes[mIdx]   || '',
             stylist:     item.stylist,
+            brand:       item.brand || '',
             itemCode:    item.itemCode,
             colorCode:   item.colorCode,
             price:       item.price,
