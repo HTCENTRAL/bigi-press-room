@@ -140,6 +140,38 @@
 
     .divider { height: 1px; background: #eee; margin: 32px 0; }
 
+    /* 業務対応表 */
+    .workflow-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 16px;
+    }
+    .workflow-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: #f7f7f7;
+      font-size: 12px;
+      color: #888;
+      font-weight: normal;
+      border-bottom: 1px solid #eee;
+    }
+    .workflow-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .workflow-table td:first-child {
+      font-weight: bold;
+      color: #222;
+      white-space: nowrap;
+      width: 180px;
+    }
+    .workflow-table td:last-child {
+      color: #555;
+    }
+
     .footer {
       text-align: center;
       font-size: 11px;
@@ -156,6 +188,7 @@
   </div>
 
   <nav>
+    <a href="#overview">はじめに</a>
     <a href="#loan">新規貸出登録</a>
     <a href="#print">伝票印刷</a>
     <a href="#return">返却・掲載登録処理</a>
@@ -165,6 +198,49 @@
   </nav>
 
   <div class="content">
+
+    <!-- はじめに -->
+    <div class="section" id="overview">
+      <div class="section-title">はじめに</div>
+      <div class="section-sub">このシステムと従来業務の対応</div>
+
+      <table class="workflow-table">
+        <thead>
+          <tr>
+            <th>このシステムの機能</th>
+            <th>従来の業務</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>新規貸出登録</td>
+            <td>手書きで貸出伝票を起票する</td>
+          </tr>
+          <tr>
+            <td>伝票印刷</td>
+            <td>伝票をコピーしてスタイリストに渡す</td>
+          </tr>
+          <tr>
+            <td>返却・掲載登録処理</td>
+            <td>返却日をメモする・掲載情報を掲載リストに手書きで転記する</td>
+          </tr>
+          <tr>
+            <td>掲載リスト作成</td>
+            <td>月ごとの掲載情報をExcel等でまとめて整形する</td>
+          </tr>
+          <tr>
+            <td>伝票編集</td>
+            <td>書き間違えた伝票を訂正・書き直す</td>
+          </tr>
+          <tr>
+            <td>掲載リストマスタ編集</td>
+            <td>掲載リストの記入ミスを修正・不要な行を消す</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="divider"></div>
 
     <!-- 新規貸出登録 -->
     <div class="section" id="loan">
@@ -189,7 +265,6 @@
               <span class="field req">スタイリスト名</span>
               <span class="field">電話番号</span>
               <span class="field req">貸出日</span>
-              <span class="field">撮影日</span>
               <span class="field req">返却予定日</span>
             </div>
             <div class="req-note">太枠は必須項目</div>
@@ -206,6 +281,7 @@
               <span class="field req">テーマ / 着用者</span>
               <span class="field req">公開日</span>
               <span class="field req">種別</span>
+              <span class="field">撮影日</span>
             </div>
           </div>
         </div>
@@ -217,10 +293,9 @@
             <div class="fields">
               <span class="field req">ブランド</span>
               <span class="field req">品番</span>
-              <span class="field">色番</span>
+              <span class="field req">色番</span>
               <span class="field req">アイテム名</span>
-              <span class="field">単価</span>
-              <span class="field">備考</span>
+              <span class="field req">単価</span>
             </div>
           </div>
         </div>
@@ -255,7 +330,7 @@
           <div class="step-num">1</div>
           <div class="step-body">
             <strong>伝票番号を入力する</strong>
-            <p>印刷したい伝票の番号を入力し「読み込む」を押します。</p>
+            <p>印刷したい伝票の番号を入力し「表示」を押します。</p>
           </div>
         </div>
         <div class="step">
@@ -303,7 +378,7 @@
           <div class="step-num">4</div>
           <div class="step-body">
             <strong>掲載情報を入力する（掲載がある場合）</strong>
-            <p>掲載が確定しているアイテムに「掲載あり」のチェックを入れ、媒体・テーマを選択します。</p>
+            <p>掲載ありのチェックを入れたアイテムがある場合、次の画面で媒体とアイテムの組み合わせを選択します。</p>
           </div>
         </div>
         <div class="step">
@@ -343,12 +418,12 @@
         <div class="step">
           <div class="step-num">3</div>
           <div class="step-body">
-            <strong>「シートを生成」を押す</strong>
-            <p>「整形用_○年○月」という名前のシートが自動で作成されます。種別ごとに整理され、公開日順に並びます。</p>
+            <strong>「次へ」を押し、分割方法を選ぶ</strong>
+            <p>「ブランド別に分割する」または「分割しない」を押すと生成が開始されます。「全員_○月_掲載リスト」（担当者を指定した場合は「担当者名_○月_掲載リスト」）という名前のシートが自動で作成されます。種別ごとに整理され、公開日順に並びます。</p>
           </div>
         </div>
       </div>
-      <div class="note">同じ年月のシートを再生成すると、既存のシートは上書きされます。</div>
+      <div class="note">同じ名前のシートを再生成すると、既存のシートは上書きされます。</div>
     </div>
 
     <div class="divider"></div>
@@ -363,15 +438,15 @@
         <div class="step">
           <div class="step-num">1</div>
           <div class="step-body">
-            <strong>伝票番号を入力して読み込む</strong>
-            <p>修正したい伝票の番号を入力し「読み込む」を押します。</p>
+            <strong>伝票番号を入力して検索する</strong>
+            <p>修正したい伝票の番号を入力し「検索」を押します。</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">2</div>
           <div class="step-body">
             <strong>内容を修正する</strong>
-            <p>スタイリスト名・貸出日・媒体情報などを編集できます。媒体セットの追加・削除も可能です。</p>
+            <p>担当者名・スタイリスト名・電話番号・返却予定日・媒体情報などを編集できます。媒体セットの追加・削除も可能です。</p>
           </div>
         </div>
         <div class="step">
@@ -412,7 +487,7 @@
           <div class="step-num">3</div>
           <div class="step-body">
             <strong>編集または削除する</strong>
-            <p>「編集」ボタンで内容を修正、「削除」ボタンで行を削除できます。</p>
+            <p>一覧に表示されるフィールドを直接書き換えて「保存」ボタンで保存。「削除」ボタンで行を削除できます。</p>
           </div>
         </div>
       </div>
