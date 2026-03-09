@@ -58,7 +58,7 @@
 </head>
 <body>
 
-<h3>掲載リスト編集</h3>
+<h3>掲載リストマスタ編集</h3>
 
 <div class="row">
   <label>伝票番号：</label>
@@ -151,6 +151,7 @@
         fieldNum('上代', 'f_price_' + idx, row.price) +
         field('アイテム', 'f_item_' + idx, row.itemName, 'text', true) +
         field('頁', 'f_page_' + idx, row.page, 'text') +
+        field('担当者名', 'f_staff_' + idx, row.staff, 'text') +
         field('画像/リンク', 'f_link_' + idx, row.imageLink, 'text', true) +
       '</div>';
 
@@ -208,6 +209,7 @@
       price:     Number(document.getElementById('f_price_' + idx).value) || 0,
       itemName:  document.getElementById('f_item_' + idx).value.trim(),
       page:      document.getElementById('f_page_' + idx).value.trim(),
+      staff:     document.getElementById('f_staff_' + idx).value.trim(),
       imageLink: document.getElementById('f_link_' + idx).value.trim()
     };
 

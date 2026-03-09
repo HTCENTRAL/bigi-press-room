@@ -4,6 +4,7 @@ var SHEET_LOAN = '貸出管理';
 var SHEET_PUBLISH = '掲載リストマスタ';
 var SHEET_SETTINGS = '設定';
 var SHEET_CREDIT = 'クレジットマスタ';
+var SHEET_STAFF = '担当者マスタ';
 var START_SLIP_NO = 8877;
 
 var TYPE_CONFIG = {
@@ -23,7 +24,7 @@ function onOpen() {
     .addItem('伝票印刷', 'openPrintSlipDialog')
     .addSeparator()
     .addItem('掲載リスト作成', 'openFormattedSheetDialog')
-    .addItem('掲載リスト編集', 'openPublishListEditDialog')
+    .addItem('掲載リストマスタ編集', 'openPublishListEditDialog')
     .addToUi();
 }
 
@@ -38,20 +39,20 @@ function setupSheets() {
     '媒体名', '月号', 'テーマ/着用者', '公開日', '種別',
     '撮影日', '返却予定日',
     'ブランド', '品番', '色番', 'アイテム名', '単価',
-    '返却ステータス', '返却日', '掲載済', '備考'
+    '返却ステータス', '返却日', '掲載済', '備考', '担当者名'
   ];
   loanSheet.getRange(1, 1, 1, loanHeaders.length).setValues([loanHeaders]);
   loanSheet.getRange(1, 1, 1, loanHeaders.length)
     .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
   loanSheet.setFrozenRows(1);
 
-  var colWidths = [80, 85, 120, 110, 120, 70, 180, 100, 100, 85, 95, 100, 100, 70, 180, 80, 90, 85, 65, 150];
+  var colWidths = [80, 85, 120, 110, 120, 70, 180, 100, 100, 85, 95, 100, 100, 70, 180, 80, 90, 85, 65, 150, 120];
   for (var ci = 0; ci < colWidths.length; ci++) {
     loanSheet.setColumnWidth(ci + 1, colWidths[ci]);
   }
 
   // 条件付き書式: 未返却=赤のみ（1ルール）
-  var cfRange = loanSheet.getRange(2, 1, 1000, 20);
+  var cfRange = loanSheet.getRange(2, 1, 1000, 21);
   loanSheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
       .whenFormulaSatisfied('=$Q2="未返却"')
@@ -62,7 +63,7 @@ function setupSheets() {
 
   var pubSheet = ss.getSheetByName(SHEET_PUBLISH);
   if (!pubSheet) pubSheet = ss.insertSheet(SHEET_PUBLISH);
-  var pubHeaders = ['伝票番号', '雑誌名', '種別', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', 'ブランド名', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク'];
+  var pubHeaders = ['伝票番号', '雑誌名', '種別', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', 'ブランド名', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク', '担当者名'];
   pubSheet.getRange(1, 1, 1, pubHeaders.length).setValues([pubHeaders]);
   pubSheet.getRange(1, 1, 1, pubHeaders.length)
     .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
@@ -106,6 +107,15 @@ function setupSheets() {
     creditSheet.getRange(1, 1, 1, creditHeaders.length)
       .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
     creditSheet.setFrozenRows(1);
+  }
+
+  // 担当者マスタシート
+  var staffSheet = ss.getSheetByName(SHEET_STAFF);
+  if (!staffSheet) {
+    staffSheet = ss.insertSheet(SHEET_STAFF);
+    staffSheet.getRange(1, 1).setValue('担当者名').setFontWeight('bold')
+      .setBackground('#4a4a4a').setFontColor('#ffffff');
+    staffSheet.setFrozenRows(1);
   }
 
   Logger.log('setup done');
@@ -176,7 +186,7 @@ function registerLoan(data) {
         mediaStr, issueStr, themeStr, relDateStr, typeStr,  // E-I
         shootDateStr, data.plannedReturnDate,                // J-K
         item.brand, item.itemCode, item.colorCode, item.itemName, pr,  // L-P
-        '未返却', '', false, ''                              // Q-T
+        '未返却', '', false, '', data.staff || ''            // Q-U
       ]);
     }
     if (rows.length === 0) {
@@ -184,7 +194,7 @@ function registerLoan(data) {
     }
 
     var startRow = getLastDataRow(sheet) + 1;
-    sheet.getRange(startRow, 1, rows.length, 20).setValues(rows);
+    sheet.getRange(startRow, 1, rows.length, 21).setValues(rows);
     // 0落ち防止: 伝票番号(A)・電話番号(D)・品番(M)・色番(N) をテキスト形式に
     sheet.getRange(startRow, 1,  rows.length, 1).setNumberFormat('@');
     sheet.getRange(startRow, 4,  rows.length, 1).setNumberFormat('@');
@@ -512,8 +522,8 @@ function searchUnreturnedItems(slipNo) {
 
     var lastDataRow = getLastDataRow(sheet);
     if (lastDataRow <= 1) return [];
-    // A〜Q列（17列）を読み込む
-    var data = sheet.getRange(2, 1, lastDataRow - 1, 17).getValues();
+    // A〜U列（21列）を読み込む
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 21).getValues();
 
     var results = [];
     for (var i = 0; i < data.length; i++) {
@@ -534,7 +544,8 @@ function searchUnreturnedItems(slipNo) {
           issueStr:   cellToStr(data[i][5]),
           themeStr:   cellToStr(data[i][6]),
           relDateStr: cellToStr(data[i][7]),
-          typeStr:    cellToStr(data[i][8])
+          typeStr:    cellToStr(data[i][8]),
+          staff:      cellToStr(data[i][20])
         });
       }
     }
@@ -569,10 +580,11 @@ function processPublish(params) {
       var c = params.combinations[i];
       loanSheet.getRange(c.rowIndex, 19).setValue(true); // S列（掲載済）
       var slipNo = cellToStr(loanSheet.getRange(c.rowIndex, 1).getValue());
+      var staff = cellToStr(loanSheet.getRange(c.rowIndex, 21).getValue());
       pubLastRow++;
-      pubSheet.getRange(pubLastRow, 1, 1, 14).setValues([[
+      pubSheet.getRange(pubLastRow, 1, 1, 15).setValues([[
         slipNo, c.media, c.type, c.issue, c.releaseDate, c.theme, c.stylist,
-        c.brand || '', c.itemCode, c.colorCode, c.price, c.itemName, '', ''
+        c.brand || '', c.itemCode, c.colorCode, c.price, c.itemName, '', '', staff
       ]]);
     }
     return { success: true };
@@ -585,7 +597,7 @@ function getPublishDataForMonth(year, month) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
   var lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
-  var data = sheet.getRange(2, 1, lastRow - 1, 14).getValues();
+  var data = sheet.getRange(2, 1, lastRow - 1, 15).getValues();
   var results = [];
   for (var i = 0; i < data.length; i++) {
     var row = data[i];
@@ -613,7 +625,8 @@ function getPublishDataForMonth(year, month) {
         price:       row[10] ? Number(row[10]) : 0,
         itemName:    cellToStr(row[11]),
         page:        cellToStr(row[12]),
-        imageLink:   cellToStr(row[13])
+        imageLink:   cellToStr(row[13]),
+        staff:       cellToStr(row[14])
       });
     }
   }
@@ -642,10 +655,12 @@ function getSlipDataForEdit(slipNo) {
 
     var lastDataRow = getLastDataRow(sheet);
     if (lastDataRow <= 1) return { found: false };
-    var data = sheet.getRange(2, 1, lastDataRow - 1, 11).getValues();
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 21).getValues();
 
     var rowCount = 0;
-    var stylist = '', phone = '', plannedReturnDate = '';
+    var returnedCount = 0;
+    var publishedCount = 0;
+    var stylist = '', phone = '', plannedReturnDate = '', staff = '';
     var mediaSets = [];
 
     for (var i = 0; i < data.length; i++) {
@@ -654,10 +669,13 @@ function getSlipDataForEdit(slipNo) {
       while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
       if (rowSlip !== s) continue;
       rowCount++;
+      if (data[i][16] === '返却済') returnedCount++;
+      if (data[i][18] === true) publishedCount++;
       if (rowCount === 1) {
         stylist           = cellToStr(data[i][2]);
         phone             = cellToStr(data[i][3]);
         plannedReturnDate = cellToStr(data[i][10]);
+        staff             = cellToStr(data[i][20]);
         var medias     = cellToStr(data[i][4]).split(' | ');
         var issues     = cellToStr(data[i][5]).split(' | ');
         var themes     = cellToStr(data[i][6]).split(' | ');
@@ -681,9 +699,12 @@ function getSlipDataForEdit(slipNo) {
     return {
       found: true,
       rowCount: rowCount,
+      returnedCount: returnedCount,
+      publishedCount: publishedCount,
       stylist: stylist,
       phone: phone,
       plannedReturnDate: plannedReturnDate,
+      staff: staff,
       mediaSets: mediaSets
     };
   } catch (e) {
@@ -726,6 +747,7 @@ function updateSlipData(slipNo, params) {
       sheet.getRange(r, 9).setValue(typeStr);
       sheet.getRange(r, 10).setValue(shootDateStr);
       sheet.getRange(r, 11).setValue(params.plannedReturnDate);
+      sheet.getRange(r, 21).setValue(params.staff || '');
       updated++;
     }
     if (updated === 0) return { success: false, message: '該当する伝票番号が見つかりませんでした。' };
@@ -742,7 +764,7 @@ function getPublishRowsForSlip(slipNo) {
     while (s.length < 5) s = '0' + s;
     var lastRow = sheet.getLastRow();
     if (lastRow <= 1) return [];
-    var data = sheet.getRange(2, 1, lastRow - 1, 14).getValues();
+    var data = sheet.getRange(2, 1, lastRow - 1, 15).getValues();
     var results = [];
     for (var i = 0; i < data.length; i++) {
       var row = data[i];
@@ -767,7 +789,8 @@ function getPublishRowsForSlip(slipNo) {
         price:     row[10] ? Number(row[10]) : 0,
         itemName:  cellToStr(row[11]),
         page:      cellToStr(row[12]),
-        imageLink: cellToStr(row[13])
+        imageLink: cellToStr(row[13]),
+        staff:     cellToStr(row[14])
       });
     }
     return results;
@@ -779,10 +802,10 @@ function getPublishRowsForSlip(slipNo) {
 function updatePublishRow(rowIndex, data) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
-    sheet.getRange(rowIndex, 1, 1, 14).setValues([[
+    sheet.getRange(rowIndex, 1, 1, 15).setValues([[
       data.slipNo, data.media, data.type, data.issue, data.releaseDate,
       data.theme, data.stylist, data.brand, data.itemCode, data.colorCode,
-      data.price, data.itemName, data.page, data.imageLink
+      data.price, data.itemName, data.page, data.imageLink, data.staff || ''
     ]]);
     return { success: true };
   } catch (e) {
@@ -803,7 +826,70 @@ function deletePublishRow(rowIndex) {
 function openPublishListEditDialog() {
   var html = HtmlService.createHtmlOutputFromFile('PublishListEditDialog')
     .setWidth(860).setHeight(620);
-  SpreadsheetApp.getUi().showModalDialog(html, '掲載リスト編集');
+  SpreadsheetApp.getUi().showModalDialog(html, '掲載リストマスタ編集');
+}
+
+function revertToUnreturned(slipNo) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var loanSheet = ss.getSheetByName(SHEET_LOAN);
+    var pubSheet = ss.getSheetByName(SHEET_PUBLISH);
+    var s = String(slipNo);
+    while (s.length < 5) s = '0' + s;
+
+    // 貸出管理シート: Q列="未返却", R列="", S列=false
+    var lastDataRow = getLastDataRow(loanSheet);
+    var revertedCount = 0;
+    if (lastDataRow > 1) {
+      var loanData = loanSheet.getRange(2, 1, lastDataRow - 1, 1).getValues();
+      for (var i = 0; i < loanData.length; i++) {
+        if (!loanData[i][0]) continue;
+        var rowSlip = String(loanData[i][0]);
+        while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
+        if (rowSlip !== s) continue;
+        var r = i + 2;
+        loanSheet.getRange(r, 17).setValue('未返却');  // Q列
+        loanSheet.getRange(r, 18).setValue('');         // R列
+        loanSheet.getRange(r, 19).setValue(false);      // S列
+        revertedCount++;
+      }
+    }
+
+    // 掲載リストマスタ: 該当伝票番号の行を後ろから物理削除
+    var deletedPublishCount = 0;
+    var pubLastRow = pubSheet.getLastRow();
+    if (pubLastRow > 1) {
+      var pubData = pubSheet.getRange(2, 1, pubLastRow - 1, 1).getValues();
+      var rowsToDelete = [];
+      for (var j = 0; j < pubData.length; j++) {
+        if (!pubData[j][0]) continue;
+        var rowSlipPub = String(pubData[j][0]);
+        while (rowSlipPub.length < 5) rowSlipPub = '0' + rowSlipPub;
+        if (rowSlipPub === s) rowsToDelete.push(j + 2);
+      }
+      for (var k = rowsToDelete.length - 1; k >= 0; k--) {
+        pubSheet.deleteRow(rowsToDelete[k]);
+        deletedPublishCount++;
+      }
+    }
+
+    return { success: true, revertedCount: revertedCount, deletedPublishCount: deletedPublishCount };
+  } catch (e) {
+    return { success: false, message: 'エラー: ' + e.message };
+  }
+}
+
+function getStaffList() {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_STAFF);
+    if (!sheet) return [];
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return [];
+    var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    return data.map(function(row) { return String(row[0]); }).filter(Boolean);
+  } catch (e) {
+    return [];
+  }
 }
 
 function testGetLastDataRow() {

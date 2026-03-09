@@ -79,6 +79,14 @@
 <body>
 
 <div class="section">
+  <div class="section-title">担当者</div>
+  <label>担当者名 <span style="color:red">*</span></label>
+  <select id="staff" style="width:100%;padding:7px 9px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+    <option value="">-- 選択してください --</option>
+  </select>
+</div>
+
+<div class="section">
   <div class="section-title">スタイリスト情報</div>
   <label>スタイリスト名 <span style="color:red">*</span></label>
   <input type="text" id="stylist" placeholder="例：石上 恵">
@@ -231,6 +239,8 @@
   }
 
   function submit() {
+    var staff = document.getElementById('staff').value;
+    if (!staff) { alert('担当者名を選択してください。'); return; }
     var stylist = document.getElementById('stylist').value.trim();
     if (!stylist) { alert('スタイリスト名を入力してください。'); return; }
     var mediaSets = getMediaSets();
@@ -245,6 +255,7 @@
     btn.textContent = '登録中...';
 
     var data = {
+      staff:              staff,
       stylist:            stylist,
       phone:              document.getElementById('phone').value.trim(),
       mediaSets:          mediaSets,
@@ -306,6 +317,7 @@
   }
 
   function resetForm() {
+    document.getElementById('staff').value = '';
     document.getElementById('stylist').value = '';
     document.getElementById('phone').value = '';
     document.getElementById('plannedReturnDate').value = '';
@@ -319,6 +331,21 @@
     addItem();
     window.scrollTo(0, 0);
   }
+
+  // 担当者リスト読み込み
+  function populateStaffSelect(list) {
+    var sel = document.getElementById('staff');
+    list.forEach(function(name) {
+      var opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  }
+  google.script.run
+    .withSuccessHandler(populateStaffSelect)
+    .withFailureHandler(function() {})
+    .getStaffList();
 
   // 初期表示
   addMediaSet();

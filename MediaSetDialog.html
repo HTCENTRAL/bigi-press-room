@@ -27,7 +27,15 @@
       font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase;
       letter-spacing: 0.5px; margin-bottom: 8px;
     }
-    .basic-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .basic-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+    select { width: 100%; padding: 6px 9px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+    select:focus { outline: none; border-color: #4a90d9; }
+    .revert-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; }
+    .revert-btn {
+      padding: 6px 14px; background: #fff; color: #cc0000;
+      border: 1px solid #cc0000; border-radius: 4px; cursor: pointer; font-size: 12px;
+    }
+    .revert-btn:hover { background: #fce8e6; }
     .msg { padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 10px; }
     .msg.info { background: #e8f0fe; color: #1a56db; border: 1px solid #c5d7f7; }
     .msg.error { background: #fce8e6; color: #c0392b; border: 1px solid #f5c6c3; }
@@ -96,6 +104,12 @@
     <div class="section-title">基本情報</div>
     <div class="basic-grid">
       <div>
+        <label>担当者名</label>
+        <select id="editStaff">
+          <option value="">--</option>
+        </select>
+      </div>
+      <div>
         <label>スタイリスト名</label>
         <input type="text" id="editStylist" placeholder="スタイリスト名">
       </div>
@@ -109,6 +123,10 @@
       </div>
     </div>
     <div class="row-count" id="rowCount"></div>
+    <div class="revert-section" id="revertSection" style="display:none;">
+      <button class="revert-btn" onclick="revertToUnreturned()">⟳ 未返却に戻す</button>
+      <span id="revertStatus" style="font-size:11px;margin-left:8px;color:#888;"></span>
+    </div>
   </div>
 
   <!-- 媒体セット -->
@@ -166,6 +184,20 @@
   var mediaSets = [];
   var msCounter = 0;
 
+  // 担当者リスト読み込み
+  google.script.run
+    .withSuccessHandler(function(list) {
+      var sel = document.getElementById('editStaff');
+      list.forEach(function(name) {
+        var opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    })
+    .withFailureHandler(function() {})
+    .getStaffList();
+
   function showMsg(text, type) {
     document.getElementById('msgArea').innerHTML = text
       ? '<div class="msg ' + type + '">' + text + '</div>'
@@ -202,6 +234,27 @@
     var pr = res.plannedReturnDate || '';
     document.getElementById('editPlannedReturn').value = pr.replace(/\//g, '-');
     document.getElementById('rowCount').textContent = '対象: ' + res.rowCount + ' アイテム行';
+
+    // 担当者名セット
+    var staffSel = document.getElementById('editStaff');
+    staffSel.value = res.staff || '';
+    if (!staffSel.value && res.staff) {
+      // マスタにない場合は選択肢を追加
+      var opt = document.createElement('option');
+      opt.value = res.staff;
+      opt.textContent = res.staff;
+      staffSel.appendChild(opt);
+      staffSel.value = res.staff;
+    }
+
+    // 返却済行がある場合のみ「未返却に戻す」ボタンを表示
+    var revertSection = document.getElementById('revertSection');
+    document.getElementById('revertStatus').textContent = '';
+    if ((res.returnedCount || 0) > 0) {
+      revertSection.style.display = 'block';
+    } else {
+      revertSection.style.display = 'none';
+    }
 
     mediaSets = res.mediaSets.map(function(ms, i) {
       return {
@@ -370,6 +423,7 @@
     btn.textContent = '保存中...';
 
     var params = {
+      staff: document.getElementById('editStaff').value,
       stylist: stylist,
       phone: document.getElementById('editPhone').value.trim(),
       plannedReturnDate: document.getElementById('editPlannedReturn').value.replace(/-/g, '/'),
@@ -401,6 +455,41 @@
         showMsg('システムエラー: ' + err.message, 'error');
       })
       .updateSlipData(slipNo, params);
+  }
+
+  function revertToUnreturned() {
+    var slipNo = document.getElementById('slipNo').value.trim();
+    if (!confirm('返却済データを取り消し、掲載リストマスタの該当行も削除します。よろしいですか？')) return;
+
+    var btn = document.querySelector('.revert-btn');
+    var st = document.getElementById('revertStatus');
+    btn.disabled = true;
+    st.textContent = '処理中...';
+    st.style.color = '#888';
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false;
+        if (res.success) {
+          var msg = '返却ステータスを未返却に戻しました。';
+          if (res.deletedPublishCount > 0) {
+            msg += '掲載データ ' + res.deletedPublishCount + '件 も削除しました。';
+          }
+          st.textContent = msg;
+          st.style.color = '#1e6b2e';
+          document.getElementById('revertSection').style.display = 'none';
+          showMsg(msg, 'success');
+        } else {
+          st.textContent = 'エラー: ' + res.message;
+          st.style.color = '#c0392b';
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        st.textContent = 'エラー: ' + err.message;
+        st.style.color = '#c0392b';
+      })
+      .revertToUnreturned(slipNo);
   }
 </script>
 </body>
