@@ -37,7 +37,7 @@
       border-bottom: 2px solid transparent;
       white-space: nowrap;
     }
-    nav a:hover { color: #222; border-bottom-color: #222; }
+    nav a:hover { color: #FF9900; border-bottom-color: #FF9900; }
 
     /* コンテンツ */
     .content {
@@ -84,10 +84,11 @@
     .step-num {
       width: 24px;
       height: 24px;
-      border: 1.5px solid #222;
+      background: #FF9900;
       border-radius: 50%;
       font-size: 12px;
       font-weight: bold;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -156,11 +157,11 @@
 
   <nav>
     <a href="#loan">新規貸出登録</a>
-    <a href="#return">返却処理</a>
-    <a href="#edit">伝票編集</a>
-    <a href="#publish">掲載リスト編集</a>
-    <a href="#sheet">整形シート生成</a>
     <a href="#print">伝票印刷</a>
+    <a href="#return">返却・掲載登録処理</a>
+    <a href="#sheet">掲載リスト作成</a>
+    <a href="#edit">伝票編集</a>
+    <a href="#publish">掲載リストマスタ編集</a>
   </nav>
 
   <div class="content">
@@ -243,17 +244,44 @@
 
     <div class="divider"></div>
 
-    <!-- 返却処理 -->
-    <div class="section" id="return">
-      <div class="section-title">返却処理</div>
-      <div class="section-sub">商品が返ってきたとき・掲載情報が確定したときに使います</div>
-      <div class="menu-path">メニュー › 返却処理</div>
+    <!-- 伝票印刷 -->
+    <div class="section" id="print">
+      <div class="section-title">伝票印刷</div>
+      <div class="section-sub">貸出伝票を印刷・PDF保存するときに使います</div>
+      <div class="menu-path">メニュー › 伝票印刷</div>
 
       <div class="steps">
         <div class="step">
           <div class="step-num">1</div>
           <div class="step-body">
-            <strong>「返却処理」を選ぶ</strong>
+            <strong>伝票番号を入力する</strong>
+            <p>印刷したい伝票の番号を入力し「読み込む」を押します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>内容を確認して「印刷する」を押す</strong>
+            <p>ブラウザの印刷ダイアログが開きます。PDFとして保存することも可能です。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">新規登録直後に印刷したい場合は、メニューの「伝票印刷」から伝票番号を入力してください。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 返却処理 -->
+    <div class="section" id="return">
+      <div class="section-title">返却・掲載登録処理</div>
+      <div class="section-sub">商品が返ってきたとき・掲載情報が確定したときに使います</div>
+      <div class="menu-path">メニュー › 返却・掲載登録処理</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>「返却・掲載登録処理」を選ぶ</strong>
             <p>ダイアログが開きます。</p>
           </div>
         </div>
@@ -286,7 +314,41 @@
           </div>
         </div>
       </div>
-      <div class="note">掲載情報は後から「掲載リスト編集」で修正できます。返却だけ先に処理しても構いません。</div>
+      <div class="note">掲載情報は後から「掲載リストマスタ編集」で修正できます。返却だけ先に処理しても構いません。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 整形シート生成 -->
+    <div class="section" id="sheet">
+      <div class="section-title">掲載リスト作成</div>
+      <div class="section-sub">月次レポート用の整形シートをボタン1つで作成します</div>
+      <div class="menu-path">メニュー › 掲載リスト作成</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>「掲載リスト作成」を選ぶ</strong>
+            <p>ダイアログが開きます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>年月と担当者を選ぶ</strong>
+            <p>対象の年・月・担当者をリストから選択します。「全員」を選ぶことも可能です。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>「シートを生成」を押す</strong>
+            <p>「整形用_○年○月」という名前のシートが自動で作成されます。種別ごとに整理され、公開日順に並びます。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">同じ年月のシートを再生成すると、既存のシートは上書きされます。</div>
     </div>
 
     <div class="divider"></div>
@@ -327,9 +389,9 @@
 
     <!-- 掲載リスト編集 -->
     <div class="section" id="publish">
-      <div class="section-title">掲載リスト編集</div>
+      <div class="section-title">掲載リストマスタ編集</div>
       <div class="section-sub">掲載済みの情報を修正・削除するときに使います</div>
-      <div class="menu-path">メニュー › 掲載リスト編集</div>
+      <div class="menu-path">メニュー › 掲載リストマスタ編集</div>
 
       <div class="steps">
         <div class="step">
@@ -354,68 +416,7 @@
           </div>
         </div>
       </div>
-      <div class="note">削除した掲載データは元に戻せません。間違えた場合は「返却処理」から再度掲載登録を行ってください。</div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- 整形シート生成 -->
-    <div class="section" id="sheet">
-      <div class="section-title">整形シート生成</div>
-      <div class="section-sub">月次レポート用の整形シートをボタン1つで作成します</div>
-      <div class="menu-path">メニュー › 整形シート生成</div>
-
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <strong>「整形シート生成」を選ぶ</strong>
-            <p>ダイアログが開きます。</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <strong>年月と担当者を選ぶ</strong>
-            <p>対象の年・月・担当者をリストから選択します。「全員」を選ぶことも可能です。</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <strong>「シートを生成」を押す</strong>
-            <p>「整形用_○年○月」という名前のシートが自動で作成されます。種別ごとに整理され、公開日順に並びます。</p>
-          </div>
-        </div>
-      </div>
-      <div class="note">同じ年月のシートを再生成すると、既存のシートは上書きされます。</div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- 伝票印刷 -->
-    <div class="section" id="print">
-      <div class="section-title">伝票印刷</div>
-      <div class="section-sub">貸出伝票を印刷・PDF保存するときに使います</div>
-      <div class="menu-path">メニュー › 伝票印刷</div>
-
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <strong>伝票番号を入力する</strong>
-            <p>印刷したい伝票の番号を入力し「読み込む」を押します。</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <strong>内容を確認して「印刷する」を押す</strong>
-            <p>ブラウザの印刷ダイアログが開きます。PDFとして保存することも可能です。</p>
-          </div>
-        </div>
-      </div>
-      <div class="note">新規登録直後に印刷したい場合は、メニューの「伝票印刷」から伝票番号を入力してください。</div>
+      <div class="note">削除した掲載データは元に戻せません。間違えた場合は「返却・掲載登録処理」から再度掲載登録を行ってください。</div>
     </div>
 
   </div>
