@@ -35,6 +35,11 @@
     .msg.error { background: #fce8e6; color: #c0392b; border: 1px solid #f5c6c3; }
     .msg.success { background: #e6f4ea; color: #1e6b2e; border: 1px solid #aad4b2; }
     .footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    .back-btn {
+      padding: 8px 18px; background: #fff; color: #1a56db;
+      border: 1px solid #1a56db; border-radius: 4px; cursor: pointer; font-size: 13px;
+    }
+    .back-btn:hover { background: #e8f0fe; }
     .cancel-btn {
       padding: 8px 18px; background: #fff; color: #555;
       border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 13px;
@@ -91,7 +96,7 @@
 
     <div class="footer">
       <button class="cancel-btn" onclick="google.script.host.close()">キャンセル</button>
-      <button class="confirm-btn" id="confirmBtn" onclick="doReturn()">返却処理を実行</button>
+      <button class="confirm-btn" id="confirmBtn" onclick="proceedToStepB()">返却処理を実行</button>
     </div>
   </div>
 </div>
@@ -99,19 +104,21 @@
 <!-- Step B: 掲載登録 -->
 <div id="stepB" class="step">
   <h3><span class="step-badge">Step 2</span>掲載登録</h3>
-  <p class="hint">掲載するアイテム × 媒体の組み合わせを選択してください。</p>
+  <p class="hint">掲載するアイテム × 媒体の組み合わせを選択してください。返却と掲載が同時に確定されます。</p>
   <div id="msgAreaB"></div>
   <div id="pubSections"></div>
 
   <div class="footer">
-    <button class="cancel-btn" onclick="google.script.host.close()">キャンセル</button>
-    <button class="confirm-btn" id="publishBtn" onclick="doPublish()">掲載登録を実行</button>
+    <button class="back-btn" onclick="showStepA()">← 戻る</button>
+    <button class="cancel-btn" onclick="google.script.host.close()">閉じる</button>
+    <button class="confirm-btn" id="publishBtn" onclick="doReturnAndPublish()">返却・掲載を実行</button>
   </div>
 </div>
 
 <script>
   var foundItems = [];
-  var publishItems = []; // 掲載チェックされたアイテム
+  var publishItems = [];
+  var pendingReturnData = null;
 
   // 今日の日付をデフォルトにセット
   (function() {
@@ -173,7 +180,7 @@
     });
   }
 
-  function doReturn() {
+  function proceedToStepB() {
     var returnDate = document.getElementById('returnDate').value;
     if (!returnDate) { showMsg('msgAreaA', '返却日を入力してください。', 'error'); return; }
 
@@ -196,34 +203,39 @@
       return;
     }
 
-    var btn = document.getElementById('confirmBtn');
-    btn.disabled = true;
-    btn.textContent = '処理中...';
+    pendingReturnData = { returnDate: returnDate.replace(/-/g, '/'), rows: returnRows };
 
-    var d = returnDate.replace(/-/g, '/');
-
-    google.script.run
-      .withSuccessHandler(function(res) {
-        btn.disabled = false;
-        btn.textContent = '返却処理を実行';
-        if (res.success) {
-          if (publishItems.length > 0) {
-            // Step B へ
-            showStepB();
-          } else {
+    if (publishItems.length === 0) {
+      // 掲載なし: processReturn を直接呼ぶ
+      var btn = document.getElementById('confirmBtn');
+      btn.disabled = true;
+      btn.textContent = '処理中...';
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.textContent = '返却処理を実行';
+          if (res.success) {
             showMsg('msgAreaA', '返却処理が完了しました（' + returnRows.length + '件）', 'success');
             document.getElementById('tableWrap').style.display = 'none';
+          } else {
+            showMsg('msgAreaA', res.message, 'error');
           }
-        } else {
-          showMsg('msgAreaA', res.message, 'error');
-        }
-      })
-      .withFailureHandler(function(err) {
-        btn.disabled = false;
-        btn.textContent = '返却処理を実行';
-        showMsg('msgAreaA', 'システムエラー: ' + err.message, 'error');
-      })
-      .processReturn({ returnDate: d, rows: returnRows });
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = '返却処理を実行';
+          showMsg('msgAreaA', 'システムエラー: ' + err.message, 'error');
+        })
+        .processReturn(pendingReturnData);
+    } else {
+      showStepB();
+    }
+  }
+
+  function showStepA() {
+    document.getElementById('stepB').classList.remove('active');
+    document.getElementById('stepA').classList.add('active');
+    showMsg('msgAreaA', '', '');
   }
 
   function showStepB() {
@@ -260,10 +272,10 @@
       var tbody = document.createElement('tbody');
 
       medias.forEach(function(media, mIdx) {
-        var type     = types[mIdx]    || '';
-        var issue    = issues[mIdx]   || '';
-        var theme    = themes[mIdx]   || '';
-        var relDate  = relDates[mIdx] || '';
+        var type    = types[mIdx]    || '';
+        var issue   = issues[mIdx]   || '';
+        var theme   = themes[mIdx]   || '';
+        var relDate = relDates[mIdx] || '';
         var cbId = 'pcb_' + itemIdx + '_' + mIdx;
         var circled = CIRCLED[mIdx] || (mIdx + 1) + '.';
         var tr = document.createElement('tr');
@@ -284,9 +296,8 @@
     });
   }
 
-  function doPublish() {
+  function buildCombinations() {
     var combinations = [];
-
     publishItems.forEach(function(item, itemIdx) {
       var medias   = item.mediaStr  ? item.mediaStr.split(' | ')  : [''];
       var issues   = item.issueStr  ? item.issueStr.split(' | ')  : [''];
@@ -315,7 +326,11 @@
         }
       });
     });
+    return combinations;
+  }
 
+  function doReturnAndPublish() {
+    var combinations = buildCombinations();
     if (combinations.length === 0) {
       showMsg('msgAreaB', '掲載する組み合わせを選択してください。', 'error');
       return;
@@ -328,21 +343,22 @@
     google.script.run
       .withSuccessHandler(function(res) {
         btn.disabled = false;
-        btn.textContent = '掲載登録を実行';
+        btn.textContent = '返却・掲載を実行';
         if (res.success) {
-          showMsg('msgAreaB', '掲載登録が完了しました（' + combinations.length + '件）', 'success');
+          showMsg('msgAreaB', '返却・掲載登録が完了しました（' + combinations.length + '件）', 'success');
           document.getElementById('pubSections').innerHTML = '';
           btn.style.display = 'none';
+          document.querySelector('#stepB .back-btn').style.display = 'none';
         } else {
           showMsg('msgAreaB', res.message, 'error');
         }
       })
       .withFailureHandler(function(err) {
         btn.disabled = false;
-        btn.textContent = '掲載登録を実行';
+        btn.textContent = '返却・掲載を実行';
         showMsg('msgAreaB', 'システムエラー: ' + err.message, 'error');
       })
-      .processPublish({ combinations: combinations });
+      .processReturnAndPublish({ returnData: pendingReturnData, publishData: { combinations: combinations } });
   }
 </script>
 </body>

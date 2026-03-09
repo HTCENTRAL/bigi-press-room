@@ -7,13 +7,13 @@
     body { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: #333; padding: 16px; }
     h3 { margin-bottom: 14px; font-size: 15px; color: #222; }
     .row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    label { display: block; font-size: 12px; color: #555; margin-bottom: 3px; margin-top: 10px; }
+    label { display: block; font-size: 12px; color: #555; margin-bottom: 3px; margin-top: 8px; }
     label:first-of-type { margin-top: 0; }
-    input[type=text], input[type=date] {
-      width: 100%; padding: 7px 10px; border: 1px solid #ccc;
+    input[type=text], input[type=date], select {
+      width: 100%; padding: 6px 9px; border: 1px solid #ccc;
       border-radius: 4px; font-size: 13px;
     }
-    input:focus { outline: none; border-color: #4a90d9; }
+    input:focus, select:focus { outline: none; border-color: #4a90d9; }
     .search-btn {
       padding: 8px 18px; background: #1a56db; color: #fff;
       border: none; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap;
@@ -21,41 +21,66 @@
     .search-btn:hover { background: #1545b3; }
     .section {
       background: #f7f9fc; border: 1px solid #dce7f5;
-      border-radius: 5px; padding: 12px; margin-bottom: 12px;
+      border-radius: 5px; padding: 12px; margin-bottom: 10px;
     }
     .section-title {
       font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase;
       letter-spacing: 0.5px; margin-bottom: 8px;
     }
-    .media-set-item {
-      font-size: 12px; color: #444; padding: 4px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .media-set-item:last-child { border-bottom: none; }
-    .row-count { font-size: 11px; color: #888; margin-top: 6px; }
-    .add-section { background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; padding: 12px; }
-    .add-section-title { font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .msg { padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 12px; }
+    .basic-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .msg { padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 10px; }
     .msg.info { background: #e8f0fe; color: #1a56db; border: 1px solid #c5d7f7; }
     .msg.error { background: #fce8e6; color: #c0392b; border: 1px solid #f5c6c3; }
     .msg.success { background: #e6f4ea; color: #1e6b2e; border: 1px solid #aad4b2; }
-    .footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    .ms-card {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 4px;
+      padding: 8px 10px; margin-bottom: 6px;
+    }
+    .ms-view { display: flex; align-items: center; justify-content: space-between; }
+    .ms-view-text { font-size: 12px; color: #444; flex: 1; }
+    .ms-view-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .ms-edit { display: none; }
+    .ms-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .ms-edit-grid .full { grid-column: 1 / -1; }
+    .btn-sm {
+      padding: 4px 10px; border-radius: 3px; font-size: 11px;
+      cursor: pointer; border: 1px solid #ccc; background: #fff; color: #444;
+    }
+    .btn-sm:hover { background: #f0f0f0; }
+    .btn-edit { border-color: #1a56db; color: #1a56db; }
+    .btn-edit:hover { background: #e8f0fe; }
+    .btn-delete { border-color: #cc0000; color: #cc0000; }
+    .btn-delete:hover { background: #fce8e6; }
+    .btn-save-ms { border-color: #1a56db; color: #fff; background: #1a56db; }
+    .btn-save-ms:hover { background: #1545b3; }
+    .btn-cancel-ms { color: #555; }
+    .add-btn {
+      width: 100%; padding: 7px; background: #e8f0fe; color: #1a56db;
+      border: 1px dashed #93b4f5; border-radius: 4px; cursor: pointer;
+      font-size: 12px; margin-top: 4px;
+    }
+    .add-btn:hover { background: #d0e1fd; }
+    .new-ms-form { display: none; margin-top: 8px; }
+    .new-ms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .new-ms-grid .full { grid-column: 1 / -1; }
+    .row-count { font-size: 11px; color: #888; margin-top: 4px; }
+    .footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
     .cancel-btn {
       padding: 8px 18px; background: #fff; color: #555;
       border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 13px;
     }
-    .confirm-btn {
+    .save-btn {
       padding: 8px 24px; background: #1a56db; color: #fff;
       border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;
     }
-    .confirm-btn:hover { background: #1545b3; }
-    .confirm-btn:disabled { background: #aaa; cursor: not-allowed; }
-    #addArea { display: none; }
+    .save-btn:hover { background: #1545b3; }
+    .save-btn:disabled { background: #aaa; cursor: not-allowed; }
+    #editArea { display: none; }
   </style>
 </head>
 <body>
 
-<h3>媒体セット追加</h3>
+<h3>伝票編集</h3>
 
 <div class="row">
   <label style="margin:0; white-space:nowrap;">伝票番号：</label>
@@ -65,41 +90,82 @@
 
 <div id="msgArea"></div>
 
-<div id="addArea">
+<div id="editArea">
+  <!-- 基本情報 -->
   <div class="section">
-    <div class="section-title">現在の媒体セット</div>
-    <div id="currentSets"></div>
+    <div class="section-title">基本情報</div>
+    <div class="basic-grid">
+      <div>
+        <label>スタイリスト名</label>
+        <input type="text" id="editStylist" placeholder="スタイリスト名">
+      </div>
+      <div>
+        <label>電話番号</label>
+        <input type="text" id="editPhone" placeholder="例：090-1234-5678">
+      </div>
+      <div>
+        <label>返却予定日</label>
+        <input type="date" id="editPlannedReturn">
+      </div>
+    </div>
     <div class="row-count" id="rowCount"></div>
   </div>
 
-  <div class="add-section">
-    <div class="add-section-title">追加する媒体セット</div>
-    <label>媒体名 <span style="color:red">*</span></label>
-    <input type="text" id="newMedia" placeholder="例：Vogue">
-    <label>種別 <span style="color:red">*</span></label>
-    <select id="newType">
-      <option value="雑誌(紙面)">雑誌(紙面)</option>
-      <option value="雑誌(WEB)">雑誌(WEB)</option>
-      <option value="TV">TV</option>
-      <option value="その他">その他</option>
-    </select>
-    <label>月号</label>
-    <input type="text" id="newIssue" placeholder="例：4月号">
-    <label>テーマ/着用者</label>
-    <input type="text" id="newTheme" placeholder="例：夏コーデ/石上恵">
-    <label>公開日</label>
-    <input type="date" id="newReleaseDate">
-    <label>撮影日</label>
-    <input type="date" id="newShootDate">
+  <!-- 媒体セット -->
+  <div class="section">
+    <div class="section-title">媒体セット</div>
+    <div id="msContainer"></div>
+    <button class="add-btn" onclick="toggleNewForm()">＋ 媒体セットを追加</button>
+    <div class="new-ms-form" id="newMsForm">
+      <div class="new-ms-grid">
+        <div class="full">
+          <label>種別</label>
+          <select id="nm_type">
+            <option value="雑誌(紙面)">雑誌(紙面)</option>
+            <option value="雑誌(WEB)">雑誌(WEB)</option>
+            <option value="TV">TV</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div class="full">
+          <label>媒体名 <span style="color:red">*</span></label>
+          <input type="text" id="nm_media" placeholder="例：Vogue">
+        </div>
+        <div>
+          <label>月号</label>
+          <input type="text" id="nm_issue" placeholder="例：4月号">
+        </div>
+        <div>
+          <label>公開日</label>
+          <input type="date" id="nm_releaseDate">
+        </div>
+        <div class="full">
+          <label>テーマ/着用者</label>
+          <input type="text" id="nm_theme" placeholder="例：夏コーデ">
+        </div>
+        <div>
+          <label>撮影日</label>
+          <input type="date" id="nm_shootDate">
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn-sm btn-cancel-ms" onclick="toggleNewForm()">キャンセル</button>
+        <button class="btn-sm btn-save-ms" onclick="addNewMediaSet()">追加</button>
+      </div>
+    </div>
   </div>
 
   <div class="footer">
     <button class="cancel-btn" onclick="google.script.host.close()">キャンセル</button>
-    <button class="confirm-btn" id="addBtn" onclick="addMediaSet()">追加する</button>
+    <button class="save-btn" id="saveBtn" onclick="saveAll()">保存する</button>
   </div>
 </div>
 
 <script>
+  // mediaSets: JS配列でオブジェクト管理
+  var mediaSets = [];
+  var msCounter = 0;
+
   function showMsg(text, type) {
     document.getElementById('msgArea').innerHTML = text
       ? '<div class="msg ' + type + '">' + text + '</div>'
@@ -111,7 +177,7 @@
     if (!slipNo) { showMsg('伝票番号を入力してください。', 'error'); return; }
 
     showMsg('検索中...', 'info');
-    document.getElementById('addArea').style.display = 'none';
+    document.getElementById('editArea').style.display = 'none';
 
     google.script.run
       .withSuccessHandler(function(res) {
@@ -120,74 +186,221 @@
           return;
         }
         showMsg('', '');
-        renderCurrentSets(res);
-        document.getElementById('addArea').style.display = 'block';
+        loadSlipData(res);
+        document.getElementById('editArea').style.display = 'block';
       })
       .withFailureHandler(function(err) {
         showMsg('エラー: ' + err.message, 'error');
       })
-      .getMediaSetsForSlip(slipNo);
+      .getSlipDataForEdit(slipNo);
   }
 
-  function renderCurrentSets(res) {
-    var container = document.getElementById('currentSets');
-    container.innerHTML = '';
-    if (res.mediaSets.length === 0) {
-      container.innerHTML = '<div style="color:#999;font-size:12px;">（なし）</div>';
-    } else {
-      res.mediaSets.forEach(function(ms, i) {
-        var div = document.createElement('div');
-        div.className = 'media-set-item';
-        div.textContent = (i + 1) + '.  ' + (ms.type ? ms.type + ' / ' : '') + ms.media +
-          (ms.issue ? ' / ' + ms.issue : '') +
-          (ms.theme ? ' / ' + ms.theme : '') +
-          (ms.releaseDate ? ' / ' + ms.releaseDate : '') +
-          (ms.shootDate ? ' / 撮影日:' + ms.shootDate : '');
-        container.appendChild(div);
-      });
-    }
+  function loadSlipData(res) {
+    document.getElementById('editStylist').value = res.stylist || '';
+    document.getElementById('editPhone').value = res.phone || '';
+    // plannedReturnDate is yyyy/MM/dd from server, convert to yyyy-MM-dd for date input
+    var pr = res.plannedReturnDate || '';
+    document.getElementById('editPlannedReturn').value = pr.replace(/\//g, '-');
     document.getElementById('rowCount').textContent = '対象: ' + res.rowCount + ' アイテム行';
+
+    mediaSets = res.mediaSets.map(function(ms, i) {
+      return {
+        id: ++msCounter,
+        media: ms.media || '',
+        type: ms.type || '雑誌(紙面)',
+        issue: ms.issue || '',
+        theme: ms.theme || '',
+        releaseDate: ms.releaseDate || '',
+        shootDate: ms.shootDate || ''
+      };
+    });
+    renderMediaSets();
   }
 
-  function addMediaSet() {
+  function renderMediaSets() {
+    var container = document.getElementById('msContainer');
+    container.innerHTML = '';
+    if (mediaSets.length === 0) {
+      container.innerHTML = '<div style="color:#999;font-size:12px;margin-bottom:6px;">（媒体セットなし）</div>';
+      return;
+    }
+    mediaSets.forEach(function(ms) {
+      container.appendChild(createMsCard(ms));
+    });
+  }
+
+  function createMsCard(ms) {
+    var card = document.createElement('div');
+    card.className = 'ms-card';
+    card.id = 'ms_card_' + ms.id;
+
+    var viewText = [ms.type, ms.media, ms.issue, ms.theme, ms.releaseDate, ms.shootDate ? '撮影:' + ms.shootDate : '']
+      .filter(Boolean).join(' / ');
+
+    card.innerHTML =
+      '<div class="ms-view" id="ms_view_' + ms.id + '">' +
+        '<span class="ms-view-text">' + escHtml(viewText) + '</span>' +
+        '<div class="ms-view-btns">' +
+          '<button class="btn-sm btn-edit" onclick="editMs(' + ms.id + ')">編集</button>' +
+          '<button class="btn-sm btn-delete" onclick="deleteMs(' + ms.id + ')">削除</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ms-edit" id="ms_edit_' + ms.id + '">' +
+        '<div class="ms-edit-grid">' +
+          '<div class="full"><label>種別</label>' +
+            '<select id="ms_type_' + ms.id + '">' +
+              typeOptions(ms.type) +
+            '</select></div>' +
+          '<div class="full"><label>媒体名 <span style="color:red">*</span></label>' +
+            '<input type="text" id="ms_media_' + ms.id + '" value="' + escHtml(ms.media) + '" placeholder="例：Vogue"></div>' +
+          '<div><label>月号</label>' +
+            '<input type="text" id="ms_issue_' + ms.id + '" value="' + escHtml(ms.issue) + '" placeholder="例：4月号"></div>' +
+          '<div><label>公開日</label>' +
+            '<input type="date" id="ms_rd_' + ms.id + '" value="' + toDateInput(ms.releaseDate) + '"></div>' +
+          '<div class="full"><label>テーマ/着用者</label>' +
+            '<input type="text" id="ms_theme_' + ms.id + '" value="' + escHtml(ms.theme) + '" placeholder="例：夏コーデ"></div>' +
+          '<div><label>撮影日</label>' +
+            '<input type="date" id="ms_sd_' + ms.id + '" value="' + toDateInput(ms.shootDate) + '"></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;margin-top:8px;">' +
+          '<button class="btn-sm btn-cancel-ms" onclick="cancelEditMs(' + ms.id + ')">キャンセル</button>' +
+          '<button class="btn-sm btn-save-ms" onclick="saveMs(' + ms.id + ')">保存</button>' +
+        '</div>' +
+      '</div>';
+    return card;
+  }
+
+  function typeOptions(selected) {
+    var types = ['雑誌(紙面)', '雑誌(WEB)', 'TV', 'その他'];
+    return types.map(function(t) {
+      return '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>';
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toDateInput(s) {
+    // yyyy/MM/dd → yyyy-MM-dd
+    return (s || '').replace(/\//g, '-');
+  }
+
+  function editMs(id) {
+    document.getElementById('ms_view_' + id).style.display = 'none';
+    document.getElementById('ms_edit_' + id).style.display = 'block';
+  }
+
+  function cancelEditMs(id) {
+    document.getElementById('ms_view_' + id).style.display = 'flex';
+    document.getElementById('ms_edit_' + id).style.display = 'none';
+  }
+
+  function saveMs(id) {
+    var media = document.getElementById('ms_media_' + id).value.trim();
+    if (!media) { alert('媒体名を入力してください。'); return; }
+
+    var ms = mediaSets.find(function(m) { return m.id === id; });
+    if (!ms) return;
+    ms.media = media;
+    ms.type = document.getElementById('ms_type_' + id).value;
+    ms.issue = document.getElementById('ms_issue_' + id).value.trim();
+    ms.theme = document.getElementById('ms_theme_' + id).value.trim();
+    ms.releaseDate = document.getElementById('ms_rd_' + id).value;
+    ms.shootDate = document.getElementById('ms_sd_' + id).value;
+    renderMediaSets();
+  }
+
+  function deleteMs(id) {
+    if (!confirm('この媒体セットを削除しますか？')) return;
+    mediaSets = mediaSets.filter(function(m) { return m.id !== id; });
+    renderMediaSets();
+  }
+
+  function toggleNewForm() {
+    var form = document.getElementById('newMsForm');
+    if (form.style.display === 'block') {
+      form.style.display = 'none';
+    } else {
+      form.style.display = 'block';
+      document.getElementById('nm_media').focus();
+    }
+  }
+
+  function addNewMediaSet() {
+    var media = document.getElementById('nm_media').value.trim();
+    if (!media) { alert('媒体名を入力してください。'); return; }
+
+    mediaSets.push({
+      id: ++msCounter,
+      media: media,
+      type: document.getElementById('nm_type').value,
+      issue: document.getElementById('nm_issue').value.trim(),
+      theme: document.getElementById('nm_theme').value.trim(),
+      releaseDate: document.getElementById('nm_releaseDate').value,
+      shootDate: document.getElementById('nm_shootDate').value
+    });
+
+    // Clear new form
+    ['nm_media','nm_issue','nm_theme','nm_releaseDate','nm_shootDate'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('nm_type').value = '雑誌(紙面)';
+    document.getElementById('newMsForm').style.display = 'none';
+    renderMediaSets();
+  }
+
+  function saveAll() {
     var slipNo = document.getElementById('slipNo').value.trim();
-    var media  = document.getElementById('newMedia').value.trim();
-    if (!media) { showMsg('媒体名を入力してください。', 'error'); return; }
+    var stylist = document.getElementById('editStylist').value.trim();
+    if (!stylist) { alert('スタイリスト名を入力してください。'); return; }
+    if (mediaSets.length === 0) { alert('媒体セットを1つ以上追加してください。'); return; }
 
-    var btn = document.getElementById('addBtn');
+    // Check for any media set still in edit mode - save them first
+    var editModes = document.querySelectorAll('[id^="ms_edit_"]');
+    for (var i = 0; i < editModes.length; i++) {
+      if (editModes[i].style.display === 'block') {
+        alert('編集中の媒体セットを保存してから「保存する」を押してください。');
+        return;
+      }
+    }
+
+    var btn = document.getElementById('saveBtn');
     btn.disabled = true;
-    btn.textContent = '処理中...';
+    btn.textContent = '保存中...';
 
-    var mediaSet = {
-      media:       media,
-      type:        document.getElementById('newType').value,
-      issue:       document.getElementById('newIssue').value.trim(),
-      theme:       document.getElementById('newTheme').value.trim(),
-      releaseDate: document.getElementById('newReleaseDate').value,
-      shootDate:   document.getElementById('newShootDate').value
+    var params = {
+      stylist: stylist,
+      phone: document.getElementById('editPhone').value.trim(),
+      plannedReturnDate: document.getElementById('editPlannedReturn').value.replace(/-/g, '/'),
+      mediaSets: mediaSets.map(function(ms) {
+        return {
+          media: ms.media,
+          type: ms.type,
+          issue: ms.issue,
+          theme: ms.theme,
+          releaseDate: ms.releaseDate,
+          shootDate: ms.shootDate
+        };
+      })
     };
 
     google.script.run
       .withSuccessHandler(function(res) {
         btn.disabled = false;
-        btn.textContent = '追加する';
+        btn.textContent = '保存する';
         if (res.success) {
-          showMsg(res.updated + ' アイテム行に媒体セットを追加しました。', 'success');
-          document.getElementById('addArea').style.display = 'none';
-          // 入力をリセット
-          ['newMedia','newIssue','newTheme','newReleaseDate','newShootDate'].forEach(function(id) {
-            document.getElementById(id).value = '';
-          });
+          showMsg(res.updated + ' アイテム行を更新しました。', 'success');
         } else {
           showMsg(res.message, 'error');
         }
       })
       .withFailureHandler(function(err) {
         btn.disabled = false;
-        btn.textContent = '追加する';
+        btn.textContent = '保存する';
         showMsg('システムエラー: ' + err.message, 'error');
       })
-      .addMediaSetToSlip({ slipNo: slipNo, mediaSet: mediaSet });
+      .updateSlipData(slipNo, params);
   }
 </script>
 </body>

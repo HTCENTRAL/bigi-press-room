@@ -138,12 +138,12 @@
           '</select></div>' +
         '<div class="full"><label>媒体名 <span style="color:red">*</span></label>' +
           '<input type="text" id="' + id + '_media" placeholder="例：Vogue"></div>' +
-        '<div><label>月号</label>' +
-          '<input type="text" id="' + id + '_issue" placeholder="例：4月号"></div>' +
-        '<div><label>公開日</label>' +
-          '<input type="date" id="' + id + '_releaseDate"></div>' +
-        '<div class="full"><label>テーマ/着用者</label>' +
-          '<input type="text" id="' + id + '_theme" placeholder="例：夏コーデ/石上恵"></div>' +
+        '<div><label>月号 <span style="color:red">*</span></label>' +
+          '<input type="text" id="' + id + '_issue" placeholder="例：4月号" required></div>' +
+        '<div><label>公開日 <span style="color:red">*</span></label>' +
+          '<input type="date" id="' + id + '_releaseDate" required></div>' +
+        '<div class="full"><label>テーマ/着用者 <span style="color:red">*</span></label>' +
+          '<input type="text" id="' + id + '_theme" placeholder="例：夏コーデ/石上恵" required></div>' +
         '<div><label>撮影日</label>' +
           '<input type="date" id="' + id + '_shootDate"></div>' +
       '</div>';
@@ -158,16 +158,16 @@
     div.id = id;
     div.innerHTML =
       '<button class="remove-btn" onclick="removeEl(\'' + id + '\')" title="削除">✕</button>' +
-      '<div class="full"><label>ブランド</label>' +
-        '<input type="text" id="' + id + '_brand" placeholder="例：UNTITLED"></div>' +
-      '<div class="full"><label>品番</label>' +
-        '<input type="text" id="' + id + '_code" placeholder="例：62AFP349"></div>' +
-      '<div><label>色番</label>' +
-        '<input type="text" id="' + id + '_color" placeholder="例：(1)ベージュ"></div>' +
-      '<div><label>単価</label>' +
-        '<input type="number" id="' + id + '_price" placeholder="60500" min="0"></div>' +
-      '<div class="full"><label>アイテム名</label>' +
-        '<input type="text" id="' + id + '_name" placeholder="例：スラブツイードギャバジン"></div>';
+      '<div class="full"><label>ブランド <span style="color:red">*</span></label>' +
+        '<input type="text" id="' + id + '_brand" placeholder="例：UNTITLED" required></div>' +
+      '<div class="full"><label>品番 <span style="color:red">*</span></label>' +
+        '<input type="text" id="' + id + '_code" placeholder="例：62AFP349" required></div>' +
+      '<div><label>色番 <span style="color:red">*</span></label>' +
+        '<input type="text" id="' + id + '_color" placeholder="例：(1)ベージュ" required></div>' +
+      '<div><label>単価 <span style="color:red">*</span></label>' +
+        '<input type="number" id="' + id + '_price" placeholder="60500" min="0" required></div>' +
+      '<div class="full"><label>アイテム名 <span style="color:red">*</span></label>' +
+        '<input type="text" id="' + id + '_name" placeholder="例：スラブツイードギャバジン" required></div>';
     document.getElementById('itemList').appendChild(div);
   }
 
@@ -178,37 +178,55 @@
 
   function getMediaSets() {
     var sets = [];
-    document.querySelectorAll('#mediaSetList .media-set').forEach(function(el) {
+    var els = document.querySelectorAll('#mediaSetList .media-set');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
       var id = el.id;
       var media = (document.getElementById(id + '_media') || {}).value || '';
-      if (!media.trim()) return;
+      if (!media.trim()) continue;
+      var issue = ((document.getElementById(id + '_issue') || {}).value || '').trim();
+      var theme = ((document.getElementById(id + '_theme') || {}).value || '').trim();
+      var releaseDate = (document.getElementById(id + '_releaseDate') || {}).value || '';
+      if (!issue) { alert('媒体「' + media.trim() + '」の月号を入力してください。'); return null; }
+      if (!theme) { alert('媒体「' + media.trim() + '」のテーマ/着用者を入力してください。'); return null; }
+      if (!releaseDate) { alert('媒体「' + media.trim() + '」の公開日を入力してください。'); return null; }
       sets.push({
         media:       media.trim(),
-        issue:       ((document.getElementById(id + '_issue') || {}).value || '').trim(),
-        theme:       ((document.getElementById(id + '_theme') || {}).value || '').trim(),
-        releaseDate: (document.getElementById(id + '_releaseDate') || {}).value || '',
+        issue:       issue,
+        theme:       theme,
+        releaseDate: releaseDate,
         type:        (document.getElementById(id + '_type') || {}).value || '',
         shootDate:   (document.getElementById(id + '_shootDate') || {}).value || ''
       });
-    });
+    }
     return sets;
   }
 
   function getItems() {
     var items = [];
-    document.querySelectorAll('#itemList .item-row').forEach(function(row) {
+    var els = document.querySelectorAll('#itemList .item-row');
+    for (var i = 0; i < els.length; i++) {
+      var row = els[i];
       var id = row.id;
       var code = ((document.getElementById(id + '_code') || {}).value || '').trim();
       var name = ((document.getElementById(id + '_name') || {}).value || '').trim();
-      if (!code && !name) return;
+      if (!code && !name) continue;
+      var brand = ((document.getElementById(id + '_brand') || {}).value || '').trim();
+      var colorCode = ((document.getElementById(id + '_color') || {}).value || '').trim();
+      var price = (document.getElementById(id + '_price') || {}).value || '';
+      if (!brand) { alert('アイテムのブランドを入力してください。'); return null; }
+      if (!code) { alert('アイテムの品番を入力してください。'); return null; }
+      if (!colorCode) { alert('アイテムの色番を入力してください。'); return null; }
+      if (!name) { alert('アイテム名を入力してください。'); return null; }
+      if (!price) { alert('アイテムの単価を入力してください。'); return null; }
       items.push({
-        brand:     ((document.getElementById(id + '_brand') || {}).value || '').trim(),
+        brand:     brand,
         itemCode:  code,
-        colorCode: ((document.getElementById(id + '_color') || {}).value || '').trim(),
+        colorCode: colorCode,
         itemName:  name,
-        price:     (document.getElementById(id + '_price') || {}).value || ''
+        price:     price
       });
-    });
+    }
     return items;
   }
 
@@ -216,8 +234,10 @@
     var stylist = document.getElementById('stylist').value.trim();
     if (!stylist) { alert('スタイリスト名を入力してください。'); return; }
     var mediaSets = getMediaSets();
+    if (mediaSets === null) return;
     if (mediaSets.length === 0) { alert('媒体セットを1つ以上追加してください。'); return; }
     var items = getItems();
+    if (items === null) return;
     if (items.length === 0) { alert('アイテムを1つ以上追加してください。'); return; }
 
     var btn = document.getElementById('submitBtn');
@@ -258,8 +278,7 @@
       title.textContent = '登録完了！伝票番号: ' + res.slipNo;
       msgDiv.innerHTML =
         '<div style="display:flex;gap:8px;margin-top:4px;">' +
-          '<button class="print-btn" style="flex:1;" onclick="openPrintDialog(\'' + res.slipNo + '\')">伝票を作成・印刷</button>' +
-          '<button class="reset-btn" onclick="resetForm()">新規登録</button>' +
+          '<button class="reset-btn" style="flex:1;" onclick="resetForm()">続けて登録する</button>' +
         '</div>';
       msgText.style.display = 'none';
       document.getElementById('copyArea').style.display = 'none';

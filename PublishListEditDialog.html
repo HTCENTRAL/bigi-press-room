@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; color: #333; padding: 16px; }
+    h3 { margin-bottom: 14px; font-size: 15px; color: #222; }
+    .row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    label { font-size: 12px; color: #555; white-space: nowrap; }
+    input[type=text], input[type=date], input[type=number] {
+      padding: 5px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;
+    }
+    input:focus { outline: none; border-color: #4a90d9; }
+    .search-btn {
+      padding: 8px 18px; background: #1a56db; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap;
+    }
+    .search-btn:hover { background: #1545b3; }
+    .msg { padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 10px; }
+    .msg.info { background: #e8f0fe; color: #1a56db; border: 1px solid #c5d7f7; }
+    .msg.error { background: #fce8e6; color: #c0392b; border: 1px solid #f5c6c3; }
+    .msg.success { background: #e6f4ea; color: #1e6b2e; border: 1px solid #aad4b2; }
+    #resultArea { display: none; }
+    .pub-card {
+      border: 1px solid #dce7f5; border-radius: 5px; padding: 10px;
+      margin-bottom: 10px; background: #fff;
+    }
+    .pub-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #eee;
+    }
+    .pub-card-title { font-weight: bold; font-size: 12px; color: #444; }
+    .pub-card-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+    }
+    .pub-card-grid .full { grid-column: 1 / -1; }
+    .field-label { font-size: 11px; color: #888; margin-bottom: 2px; }
+    .field-input input { width: 100%; }
+    .btn-sm {
+      padding: 4px 10px; border-radius: 3px; font-size: 11px;
+      cursor: pointer; border: 1px solid #ccc; background: #fff; color: #444;
+    }
+    .btn-save { border-color: #1a56db; color: #fff; background: #1a56db; }
+    .btn-save:hover { background: #1545b3; }
+    .btn-save:disabled { background: #aaa; border-color: #aaa; cursor: not-allowed; }
+    .btn-delete { border-color: #cc0000; color: #cc0000; }
+    .btn-delete:hover { background: #fce8e6; }
+    .save-status { font-size: 11px; margin-left: 6px; }
+    .save-status.ok { color: #1e6b2e; }
+    .save-status.err { color: #c0392b; }
+    .footer { display: flex; justify-content: flex-end; margin-top: 14px; }
+    .close-btn {
+      padding: 8px 18px; background: #fff; color: #555;
+      border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<h3>掲載リスト編集</h3>
+
+<div class="row">
+  <label>伝票番号：</label>
+  <input type="text" id="slipNo" placeholder="例：08878" style="width:130px;" maxlength="10">
+  <button class="search-btn" onclick="searchPub()">検索</button>
+</div>
+
+<div id="msgArea"></div>
+
+<div id="resultArea">
+  <div id="pubCards"></div>
+  <div class="footer">
+    <button class="close-btn" onclick="google.script.host.close()">閉じる</button>
+  </div>
+</div>
+
+<script>
+  function showMsg(text, type) {
+    document.getElementById('msgArea').innerHTML = text
+      ? '<div class="msg ' + type + '">' + text + '</div>'
+      : '';
+  }
+
+  function searchPub() {
+    var slipNo = document.getElementById('slipNo').value.trim();
+    if (!slipNo) { showMsg('伝票番号を入力してください。', 'error'); return; }
+
+    showMsg('検索中...', 'info');
+    document.getElementById('resultArea').style.display = 'none';
+
+    google.script.run
+      .withSuccessHandler(function(rows) {
+        if (rows.length === 0) {
+          showMsg('該当する掲載データが見つかりませんでした。', 'error');
+          return;
+        }
+        showMsg('', '');
+        renderCards(rows);
+        document.getElementById('resultArea').style.display = 'block';
+      })
+      .withFailureHandler(function(err) {
+        showMsg('エラー: ' + err.message, 'error');
+      })
+      .getPublishRowsForSlip(slipNo);
+  }
+
+  function renderCards(rows) {
+    var container = document.getElementById('pubCards');
+    container.innerHTML = '';
+    rows.forEach(function(row, idx) {
+      container.appendChild(createCard(row, idx));
+    });
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toDateInput(s) {
+    return (s || '').replace(/\//g, '-');
+  }
+
+  function createCard(row, idx) {
+    var card = document.createElement('div');
+    card.className = 'pub-card';
+    card.id = 'card_' + idx;
+
+    var title = [row.type, row.media, row.issue].filter(Boolean).join(' / ') +
+      (row.itemName ? ' — ' + row.itemName : '');
+
+    card.innerHTML =
+      '<div class="pub-card-header">' +
+        '<span class="pub-card-title">' + escHtml(title) + '</span>' +
+        '<div style="display:flex;align-items:center;gap:6px;">' +
+          '<span class="save-status" id="st_' + idx + '"></span>' +
+          '<button class="btn-sm btn-delete" onclick="deleteRow(' + idx + ',' + row.rowIndex + ')">削除</button>' +
+          '<button class="btn-sm btn-save" id="savebtn_' + idx + '" onclick="saveRow(' + idx + ',' + row.rowIndex + ')">保存</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pub-card-grid">' +
+        field('メディア名', 'f_media_' + idx, row.media, 'text') +
+        field('種別', 'f_type_' + idx, row.type, 'text') +
+        field('掲載号', 'f_issue_' + idx, row.issue, 'text') +
+        fieldDate('公開日', 'f_rd_' + idx, toDateInput(row.releaseDate)) +
+        field('テーマ/着用者', 'f_theme_' + idx, row.theme, 'text', true) +
+        field('スタイリスト', 'f_stylist_' + idx, row.stylist, 'text') +
+        field('ブランド名', 'f_brand_' + idx, row.brand, 'text') +
+        field('品番', 'f_code_' + idx, row.itemCode, 'text') +
+        field('色番', 'f_color_' + idx, row.colorCode, 'text') +
+        fieldNum('上代', 'f_price_' + idx, row.price) +
+        field('アイテム', 'f_item_' + idx, row.itemName, 'text', true) +
+        field('頁', 'f_page_' + idx, row.page, 'text') +
+        field('画像/リンク', 'f_link_' + idx, row.imageLink, 'text', true) +
+      '</div>';
+
+    // Store slipNo for later save
+    card.dataset.slipNo = row.slipNo;
+    return card;
+  }
+
+  function field(label, id, val, type, full) {
+    return '<div class="field-input' + (full ? ' full' : '') + '">' +
+      '<div class="field-label">' + escHtml(label) + '</div>' +
+      '<input type="text" id="' + id + '" value="' + escHtml(val) + '">' +
+      '</div>';
+  }
+
+  function fieldDate(label, id, val) {
+    return '<div class="field-input">' +
+      '<div class="field-label">' + escHtml(label) + '</div>' +
+      '<input type="date" id="' + id + '" value="' + escHtml(val) + '">' +
+      '</div>';
+  }
+
+  function fieldNum(label, id, val) {
+    return '<div class="field-input">' +
+      '<div class="field-label">' + escHtml(label) + '</div>' +
+      '<input type="number" id="' + id + '" value="' + (val || '') + '" min="0">' +
+      '</div>';
+  }
+
+  function saveRow(idx, rowIndex) {
+    var card = document.getElementById('card_' + idx);
+    var slipNo = card.dataset.slipNo;
+    var btn = document.getElementById('savebtn_' + idx);
+    var st = document.getElementById('st_' + idx);
+
+    btn.disabled = true;
+    btn.textContent = '保存中...';
+    st.textContent = '';
+    st.className = 'save-status';
+
+    var rd = document.getElementById('f_rd_' + idx).value;
+    var rdFormatted = rd ? rd.replace(/-/g, '/') : '';
+
+    var data = {
+      slipNo:    slipNo,
+      media:     document.getElementById('f_media_' + idx).value.trim(),
+      type:      document.getElementById('f_type_' + idx).value.trim(),
+      issue:     document.getElementById('f_issue_' + idx).value.trim(),
+      releaseDate: rdFormatted,
+      theme:     document.getElementById('f_theme_' + idx).value.trim(),
+      stylist:   document.getElementById('f_stylist_' + idx).value.trim(),
+      brand:     document.getElementById('f_brand_' + idx).value.trim(),
+      itemCode:  document.getElementById('f_code_' + idx).value.trim(),
+      colorCode: document.getElementById('f_color_' + idx).value.trim(),
+      price:     Number(document.getElementById('f_price_' + idx).value) || 0,
+      itemName:  document.getElementById('f_item_' + idx).value.trim(),
+      page:      document.getElementById('f_page_' + idx).value.trim(),
+      imageLink: document.getElementById('f_link_' + idx).value.trim()
+    };
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.textContent = '保存';
+        if (res.success) {
+          st.textContent = '✓ 保存済';
+          st.className = 'save-status ok';
+        } else {
+          st.textContent = 'エラー: ' + res.message;
+          st.className = 'save-status err';
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.textContent = '保存';
+        st.textContent = 'エラー: ' + err.message;
+        st.className = 'save-status err';
+      })
+      .updatePublishRow(rowIndex, data);
+  }
+
+  function deleteRow(idx, rowIndex) {
+    if (!confirm('この掲載データを削除しますか？')) return;
+
+    var btn = document.getElementById('savebtn_' + idx);
+    btn.disabled = true;
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.success) {
+          var card = document.getElementById('card_' + idx);
+          if (card) card.remove();
+          // Re-search to get fresh rowIndices
+          showMsg('削除しました。行番号が変わるため、再度検索してください。', 'success');
+          document.getElementById('resultArea').style.display = 'none';
+        } else {
+          btn.disabled = false;
+          showMsg('削除エラー: ' + res.message, 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        showMsg('システムエラー: ' + err.message, 'error');
+      })
+      .deletePublishRow(rowIndex);
+  }
+</script>
+</body>
+</html>

@@ -19,10 +19,11 @@ function onOpen() {
     .createMenu('貸出管理')
     .addItem('新規貸出登録', 'openLoanSidebar')
     .addItem('返却処理', 'openReturnDialog')
-    .addItem('媒体セット追加', 'openMediaSetDialog')
+    .addItem('伝票編集', 'openMediaSetDialog')
     .addItem('伝票印刷', 'openPrintSlipDialog')
     .addSeparator()
     .addItem('掲載リスト作成', 'openFormattedSheetDialog')
+    .addItem('掲載リスト編集', 'openPublishListEditDialog')
     .addToUi();
 }
 
@@ -61,7 +62,7 @@ function setupSheets() {
 
   var pubSheet = ss.getSheetByName(SHEET_PUBLISH);
   if (!pubSheet) pubSheet = ss.insertSheet(SHEET_PUBLISH);
-  var pubHeaders = ['雑誌名', '種別', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', 'ブランド名', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク'];
+  var pubHeaders = ['伝票番号', '雑誌名', '種別', '掲載号', '公開日', 'テーマ/着用者', 'スタイリスト', 'ブランド名', '品番', '色番', '上代', 'アイテム', '頁', '画像/リンク'];
   pubSheet.getRange(1, 1, 1, pubHeaders.length).setValues([pubHeaders]);
   pubSheet.getRange(1, 1, 1, pubHeaders.length)
     .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
@@ -236,8 +237,8 @@ function buildLoanMessage(slipNo, data) {
 
 function openMediaSetDialog() {
   var html = HtmlService.createHtmlOutputFromFile('MediaSetDialog')
-    .setWidth(500).setHeight(480);
-  SpreadsheetApp.getUi().showModalDialog(html, '媒体セット追加');
+    .setWidth(560).setHeight(600);
+  SpreadsheetApp.getUi().showModalDialog(html, '伝票編集');
 }
 
 // ===== 伝票印刷 =====
@@ -567,9 +568,10 @@ function processPublish(params) {
     for (var i = 0; i < params.combinations.length; i++) {
       var c = params.combinations[i];
       loanSheet.getRange(c.rowIndex, 19).setValue(true); // S列（掲載済）
+      var slipNo = cellToStr(loanSheet.getRange(c.rowIndex, 1).getValue());
       pubLastRow++;
-      pubSheet.getRange(pubLastRow, 1, 1, 13).setValues([[
-        c.media, c.type, c.issue, c.releaseDate, c.theme, c.stylist,
+      pubSheet.getRange(pubLastRow, 1, 1, 14).setValues([[
+        slipNo, c.media, c.type, c.issue, c.releaseDate, c.theme, c.stylist,
         c.brand || '', c.itemCode, c.colorCode, c.price, c.itemName, '', ''
       ]]);
     }
@@ -583,12 +585,12 @@ function getPublishDataForMonth(year, month) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
   var lastRow = sheet.getLastRow();
   if (lastRow <= 1) return [];
-  var data = sheet.getRange(2, 1, lastRow - 1, 13).getValues();
+  var data = sheet.getRange(2, 1, lastRow - 1, 14).getValues();
   var results = [];
   for (var i = 0; i < data.length; i++) {
     var row = data[i];
-    if (!row[0] && !row[2]) continue; // A=雑誌名, C=掲載号 で空行判定
-    var pubDate = row[3]; // D列: 公開日
+    if (!row[1] && !row[3]) continue; // B=雑誌名, D=掲載号 で空行判定
+    var pubDate = row[4]; // E列: 公開日
     var matched = false;
     if (pubDate) {
       var d = new Date(pubDate);
@@ -599,23 +601,209 @@ function getPublishDataForMonth(year, month) {
     if (matched) {
       var rdStr = pubDate ? Utilities.formatDate(new Date(pubDate), Session.getScriptTimeZone(), 'yyyy/MM/dd') : '';
       results.push({
-        media:       cellToStr(row[0]),
-        type:        cellToStr(row[1]),
-        issue:       cellToStr(row[2]),
+        media:       cellToStr(row[1]),
+        type:        cellToStr(row[2]),
+        issue:       cellToStr(row[3]),
         releaseDate: rdStr,
-        theme:       cellToStr(row[4]),
-        stylist:     cellToStr(row[5]),
-        brand:       cellToStr(row[6]),
-        itemCode:    cellToStr(row[7]),
-        colorCode:   cellToStr(row[8]),
-        price:       row[9] ? Number(row[9]) : 0,
-        itemName:    cellToStr(row[10]),
-        page:        cellToStr(row[11]),
-        imageLink:   cellToStr(row[12])
+        theme:       cellToStr(row[5]),
+        stylist:     cellToStr(row[6]),
+        brand:       cellToStr(row[7]),
+        itemCode:    cellToStr(row[8]),
+        colorCode:   cellToStr(row[9]),
+        price:       row[10] ? Number(row[10]) : 0,
+        itemName:    cellToStr(row[11]),
+        page:        cellToStr(row[12]),
+        imageLink:   cellToStr(row[13])
       });
     }
   }
   return results;
+}
+
+function processReturnAndPublish(params) {
+  try {
+    var retResult = processReturn(params.returnData);
+    if (!retResult.success) return retResult;
+    if (params.publishData && params.publishData.combinations && params.publishData.combinations.length > 0) {
+      var pubResult = processPublish(params.publishData);
+      if (!pubResult.success) return pubResult;
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: 'エラー: ' + e.message };
+  }
+}
+
+function getSlipDataForEdit(slipNo) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
+    var s = String(slipNo);
+    while (s.length < 5) s = '0' + s;
+
+    var lastDataRow = getLastDataRow(sheet);
+    if (lastDataRow <= 1) return { found: false };
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 11).getValues();
+
+    var rowCount = 0;
+    var stylist = '', phone = '', plannedReturnDate = '';
+    var mediaSets = [];
+
+    for (var i = 0; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      var rowSlip = String(data[i][0]);
+      while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
+      if (rowSlip !== s) continue;
+      rowCount++;
+      if (rowCount === 1) {
+        stylist           = cellToStr(data[i][2]);
+        phone             = cellToStr(data[i][3]);
+        plannedReturnDate = cellToStr(data[i][10]);
+        var medias     = cellToStr(data[i][4]).split(' | ');
+        var issues     = cellToStr(data[i][5]).split(' | ');
+        var themes     = cellToStr(data[i][6]).split(' | ');
+        var relDates   = cellToStr(data[i][7]).split(' | ');
+        var types      = cellToStr(data[i][8]).split(' | ');
+        var shootDates = cellToStr(data[i][9]).split(' | ');
+        for (var j = 0; j < medias.length; j++) {
+          if (!medias[j]) continue;
+          mediaSets.push({
+            media:       medias[j],
+            issue:       issues[j]     || '',
+            theme:       themes[j]     || '',
+            releaseDate: relDates[j]   || '',
+            type:        types[j]      || '',
+            shootDate:   shootDates[j] || ''
+          });
+        }
+      }
+    }
+    if (rowCount === 0) return { found: false };
+    return {
+      found: true,
+      rowCount: rowCount,
+      stylist: stylist,
+      phone: phone,
+      plannedReturnDate: plannedReturnDate,
+      mediaSets: mediaSets
+    };
+  } catch (e) {
+    return { found: false, error: e.message };
+  }
+}
+
+function updateSlipData(slipNo, params) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
+    var s = String(slipNo);
+    while (s.length < 5) s = '0' + s;
+
+    var lastDataRow = getLastDataRow(sheet);
+    if (lastDataRow <= 1) return { success: false, message: '該当データがありません。' };
+    var data = sheet.getRange(2, 1, lastDataRow - 1, 1).getValues();
+
+    var mediaStr    = params.mediaSets.map(function(m) { return m.media; }).join(' | ');
+    var issueStr    = params.mediaSets.map(function(m) { return m.issue; }).join(' | ');
+    var themeStr    = params.mediaSets.map(function(m) { return m.theme; }).join(' | ');
+    var relDateStr  = params.mediaSets.map(function(m) { return m.releaseDate; }).join(' | ');
+    var typeStr     = params.mediaSets.map(function(m) { return m.type || ''; }).join(' | ');
+    var shootDateArr = params.mediaSets.map(function(m) { return m.shootDate || ''; });
+    var anyShootDate = shootDateArr.some(function(d) { return !!d; });
+    var shootDateStr = anyShootDate ? shootDateArr.join(' | ') : '';
+
+    var updated = 0;
+    for (var i = 0; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      var rowSlip = String(data[i][0]);
+      while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
+      if (rowSlip !== s) continue;
+      var r = i + 2;
+      sheet.getRange(r, 3).setValue(params.stylist);
+      sheet.getRange(r, 4).setValue(params.phone);
+      sheet.getRange(r, 5).setValue(mediaStr);
+      sheet.getRange(r, 6).setValue(issueStr);
+      sheet.getRange(r, 7).setValue(themeStr);
+      sheet.getRange(r, 8).setValue(relDateStr);
+      sheet.getRange(r, 9).setValue(typeStr);
+      sheet.getRange(r, 10).setValue(shootDateStr);
+      sheet.getRange(r, 11).setValue(params.plannedReturnDate);
+      updated++;
+    }
+    if (updated === 0) return { success: false, message: '該当する伝票番号が見つかりませんでした。' };
+    return { success: true, updated: updated };
+  } catch (e) {
+    return { success: false, message: 'エラー: ' + e.message };
+  }
+}
+
+function getPublishRowsForSlip(slipNo) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
+    var s = String(slipNo);
+    while (s.length < 5) s = '0' + s;
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return [];
+    var data = sheet.getRange(2, 1, lastRow - 1, 14).getValues();
+    var results = [];
+    for (var i = 0; i < data.length; i++) {
+      var row = data[i];
+      if (!row[0]) continue;
+      var rowSlip = String(row[0]);
+      while (rowSlip.length < 5) rowSlip = '0' + rowSlip;
+      if (rowSlip !== s) continue;
+      var pubDate = row[4];
+      var rdStr = pubDate ? Utilities.formatDate(new Date(pubDate), Session.getScriptTimeZone(), 'yyyy/MM/dd') : '';
+      results.push({
+        rowIndex:  i + 2,
+        slipNo:    cellToStr(row[0]),
+        media:     cellToStr(row[1]),
+        type:      cellToStr(row[2]),
+        issue:     cellToStr(row[3]),
+        releaseDate: rdStr,
+        theme:     cellToStr(row[5]),
+        stylist:   cellToStr(row[6]),
+        brand:     cellToStr(row[7]),
+        itemCode:  cellToStr(row[8]),
+        colorCode: cellToStr(row[9]),
+        price:     row[10] ? Number(row[10]) : 0,
+        itemName:  cellToStr(row[11]),
+        page:      cellToStr(row[12]),
+        imageLink: cellToStr(row[13])
+      });
+    }
+    return results;
+  } catch (e) {
+    return [];
+  }
+}
+
+function updatePublishRow(rowIndex, data) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
+    sheet.getRange(rowIndex, 1, 1, 14).setValues([[
+      data.slipNo, data.media, data.type, data.issue, data.releaseDate,
+      data.theme, data.stylist, data.brand, data.itemCode, data.colorCode,
+      data.price, data.itemName, data.page, data.imageLink
+    ]]);
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function deletePublishRow(rowIndex) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
+    sheet.deleteRow(rowIndex);
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function openPublishListEditDialog() {
+  var html = HtmlService.createHtmlOutputFromFile('PublishListEditDialog')
+    .setWidth(860).setHeight(620);
+  SpreadsheetApp.getUi().showModalDialog(html, '掲載リスト編集');
 }
 
 function testGetLastDataRow() {
