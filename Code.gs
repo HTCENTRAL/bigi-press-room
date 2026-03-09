@@ -19,11 +19,13 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('貸出管理')
     .addItem('新規貸出登録', 'openLoanSidebar')
-    .addItem('返却処理', 'openReturnDialog')
-    .addItem('伝票編集', 'openMediaSetDialog')
     .addItem('伝票印刷', 'openPrintSlipDialog')
     .addSeparator()
+    .addItem('返却・掲載登録処理', 'openReturnDialog')
+    .addSeparator()
     .addItem('掲載リスト作成', 'openFormattedSheetDialog')
+    .addSeparator()
+    .addItem('伝票編集', 'openMediaSetDialog')
     .addItem('掲載リストマスタ編集', 'openPublishListEditDialog')
     .addToUi();
 }
