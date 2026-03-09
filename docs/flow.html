@@ -6,420 +6,270 @@
   <title>BIGI PRESS ROOM — 業務フロー比較</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-      padding: 40px 20px;
+      background: #fff;
+      color: #222;
+      padding: 60px 24px 80px;
     }
 
-    /* ヘッダー */
     .header {
       text-align: center;
       margin-bottom: 48px;
     }
-    .header .label {
-      display: inline-block;
-      background: #FF9900;
-      color: #fff;
-      font-size: 12px;
-      font-weight: bold;
-      letter-spacing: 0.1em;
-      padding: 4px 14px;
-      border-radius: 20px;
-      margin-bottom: 12px;
-    }
     .header h1 {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: bold;
-      color: #222;
       margin-bottom: 8px;
     }
     .header p {
-      font-size: 14px;
-      color: #666;
+      font-size: 13px;
+      color: #888;
     }
 
-    /* 課題バナー */
-    .pain-banner {
-      max-width: 860px;
-      margin: 0 auto 40px;
-      background: #fff3cd;
-      border-left: 4px solid #e67e00;
+    .pain-box {
+      max-width: 720px;
+      margin: 0 auto 48px;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      padding: 16px 20px;
+      padding: 20px 24px;
     }
-    .pain-banner h3 {
-      font-size: 13px;
-      color: #b35900;
-      font-weight: bold;
-      margin-bottom: 8px;
-      letter-spacing: 0.05em;
+    .pain-box h3 {
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
     }
-    .pain-banner ul {
+    .pain-box ul {
       list-style: none;
       display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-    .pain-banner ul li {
-      font-size: 13px;
-      color: #7a4000;
-      display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 6px;
     }
-    .pain-banner ul li::before {
-      content: '⚠️';
+    .pain-box li {
       font-size: 14px;
-    }
-
-    /* 比較グリッド */
-    .comparison {
-      max-width: 960px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 60px 1fr;
-      gap: 0;
-      align-items: start;
-    }
-
-    /* カラムヘッダー */
-    .col-header {
-      text-align: center;
-      padding: 14px 20px;
-      border-radius: 12px 12px 0 0;
-      font-size: 15px;
-      font-weight: bold;
-      letter-spacing: 0.05em;
-    }
-    .col-header.before {
-      background: #636e72;
-      color: #fff;
-    }
-    .col-header.after {
-      background: #0984e3;
-      color: #fff;
-    }
-    .col-header .sub {
-      font-size: 11px;
-      font-weight: normal;
-      opacity: 0.85;
-      margin-top: 2px;
-    }
-
-    /* 中央矢印列ヘッダー */
-    .center-header {
-      text-align: center;
-      padding: 14px 0;
-      font-size: 18px;
-    }
-
-    /* フロー列 */
-    .flow-col {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .flow-col.before { background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 12px 12px; }
-    .flow-col.after  { background: #eef6ff; border: 1px solid #b3d4f5; border-top: none; border-radius: 0 0 12px 12px; }
-
-    /* 中央列 */
-    .center-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding-top: 20px;
-      gap: 0;
-    }
-
-    /* ステップカード */
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 18px 20px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding-left: 18px;
       position: relative;
+      color: #444;
     }
-    .step:last-child { border-bottom: none; }
+    .pain-box li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: #bbb;
+    }
 
-    .step-num {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* 比較テーブル */
+    .table-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      padding: 12px 20px;
       font-size: 13px;
       font-weight: bold;
-      flex-shrink: 0;
-      margin-top: 2px;
+      text-align: center;
+      border-bottom: 2px solid #222;
     }
-    .before .step-num { background: #636e72; color: #fff; }
-    .after  .step-num { background: #0984e3; color: #fff; }
+    thead th.before { text-align: left; color: #888; }
+    thead th.step   { width: 48px; color: #bbb; font-weight: normal; }
+    thead th.after  { text-align: left; color: #222; }
 
-    .step-content {}
-    .step-title {
+    tbody tr { border-bottom: 1px solid #eee; }
+    tbody tr:last-child { border-bottom: none; }
+
+    td {
+      padding: 20px;
+      vertical-align: top;
       font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 4px;
-      line-height: 1.4;
+      line-height: 1.7;
     }
-    .step-desc {
+    td.step-cell {
+      text-align: center;
+      vertical-align: middle;
+      color: #bbb;
       font-size: 12px;
-      color: #666;
-      line-height: 1.6;
+      padding: 0;
     }
 
-    /* 課題バッジ */
-    .badge-pain {
+    .cell-before { color: #666; }
+    .cell-after  { color: #111; font-weight: 500; }
+
+    .tag {
       display: inline-block;
-      background: #ffe0e0;
-      color: #c0392b;
       font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 6px;
       font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 10px;
-      margin-top: 6px;
     }
-    /* 改善バッジ */
-    .badge-good {
-      display: inline-block;
-      background: #d4f5e9;
-      color: #1a7a4a;
-      font-size: 10px;
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 10px;
-      margin-top: 6px;
-    }
-    /* 変化なしバッジ */
-    .badge-same {
-      display: inline-block;
-      background: #eee;
-      color: #888;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      margin-top: 6px;
-    }
+    .tag-issue { background: #f5f5f5; color: #999; }
+    .tag-gain  { background: #f0f8f0; color: #27ae60; }
+    .tag-same  { background: #f5f5f5; color: #aaa; }
 
-    /* 中央の矢印・接続 */
-    .arrow-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 68px;
-      color: #aaa;
-      font-size: 22px;
-    }
-
-    /* サマリーセクション */
+    /* サマリー */
     .summary {
-      max-width: 960px;
-      margin: 40px auto 0;
+      max-width: 820px;
+      margin: 56px auto 0;
+      border-top: 1px solid #eee;
+      padding-top: 40px;
+    }
+    .summary h2 {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+    .summary-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 20px;
     }
-    .summary-card {
-      background: #fff;
-      border-radius: 12px;
+    .summary-item {
       padding: 20px;
-      text-align: center;
-      border: 1px solid #e0e0e0;
+      border: 1px solid #eee;
+      border-radius: 8px;
     }
-    .summary-card .icon { font-size: 32px; margin-bottom: 8px; }
-    .summary-card .title { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px; }
-    .summary-card .desc { font-size: 12px; color: #666; line-height: 1.6; }
+    .summary-item h3 {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .summary-item p {
+      font-size: 12px;
+      color: #777;
+      line-height: 1.7;
+    }
 
     .footer {
       text-align: center;
-      margin-top: 48px;
+      margin-top: 60px;
       font-size: 11px;
-      color: #aaa;
+      color: #ccc;
     }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <div class="label">BIGI PRESS ROOM</div>
-    <h1>業務フロー 導入前 → 導入後</h1>
-    <p>サンプル貸出管理の流れがどのように変わるか</p>
+    <h1>業務フロー　導入前 → 導入後</h1>
+    <p>BIGI PRESS ROOM — サンプル貸出管理システム</p>
   </div>
 
-  <div class="pain-banner">
-    <h3>導入前の主な課題</h3>
+  <div class="pain-box">
+    <h3>導入前の課題</h3>
     <ul>
-      <li>手入力による工数負荷が大きい</li>
-      <li>フォーマットに合わせて情報を再度入力する手間が発生</li>
+      <li>手入力の工数が大きく、担当者の負担になっていた</li>
+      <li>情報をフォーマットに合わせて再入力する手間が毎回発生していた</li>
     </ul>
   </div>
 
-  <div class="comparison">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="before">導入前（アナログ）</th>
+          <th class="step"></th>
+          <th class="after">導入後（システム）</th>
+        </tr>
+      </thead>
+      <tbody>
 
-    <!-- ヘッダー行 -->
-    <div class="col-header before">
-      導入前（アナログ）
-      <div class="sub">紙の伝票 + Excel 管理</div>
-    </div>
-    <div class="center-header"></div>
-    <div class="col-header after">
-      導入後（BIGI PRESS ROOM）
-      <div class="sub">システム一元管理</div>
-    </div>
+        <tr>
+          <td class="cell-before">
+            紙の伝票に手書きでメモ<br>
+            <small>ブランド・商品情報・媒体・テーマを記入</small><br>
+            <span class="tag tag-issue">手書きミス・紛失リスク</span>
+          </td>
+          <td class="step-cell">1</td>
+          <td class="cell-after">
+            フォームから入力して登録<br>
+            <small>伝票番号は自動発行。データはクラウドに保存</small><br>
+            <span class="tag tag-gain">入力ガイド付き・紛失ゼロ</span>
+          </td>
+        </tr>
 
-    <!-- STEP 1 -->
-    <div class="flow-col before">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">紙の伝票に手書き</div>
-          <div class="step-desc">ブランド・商品情報・媒体・テーマを<br>伝票に手書きでメモ</div>
-          <span class="badge-pain">手書きミス・紛失リスク</span>
-        </div>
-      </div>
-    </div>
-    <div class="center-col">
-      <div class="arrow-row">→</div>
-    </div>
-    <div class="flow-col after">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">システムに登録</div>
-          <div class="step-desc">サイドバーフォームから入力。<br>伝票番号は自動採番・印刷可能</div>
-          <span class="badge-good">入力ガイド付き・紛失ゼロ</span>
-        </div>
-      </div>
-    </div>
+        <tr>
+          <td class="cell-before">
+            スタイリストへ商品を貸し出し
+          </td>
+          <td class="step-cell">2</td>
+          <td class="cell-after">
+            スタイリストへ商品を貸し出し<br>
+            <span class="tag tag-same">変わらず</span>
+          </td>
+        </tr>
 
-    <!-- STEP 2 -->
-    <div class="flow-col before">
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <div class="step-title">スタイリストへ商品を貸し出し</div>
-          <div class="step-desc">商品を梱包してスタイリストへ</div>
-          <span class="badge-same">変わらず</span>
-        </div>
-      </div>
-    </div>
-    <div class="center-col">
-      <div class="arrow-row">→</div>
-    </div>
-    <div class="flow-col after">
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <div class="step-title">スタイリストへ商品を貸し出し</div>
-          <div class="step-desc">商品を梱包してスタイリストへ</div>
-          <span class="badge-same">変わらず</span>
-        </div>
-      </div>
-    </div>
+        <tr>
+          <td class="cell-before">
+            スタイリストから口頭で掲載情報を受け取る<br>
+            <small>どの媒体に・どのアイテムが・どのテーマで採用されるか</small><br>
+            <span class="tag tag-issue">情報漏れ・聞き間違いリスク</span>
+          </td>
+          <td class="step-cell">3</td>
+          <td class="cell-after">
+            返却ダイアログで返却と掲載を同時に登録<br>
+            <small>伝票番号を入力するとアイテム一覧が表示され、その場で確定</small><br>
+            <span class="tag tag-gain">1画面で完結・入力漏れ防止</span>
+          </td>
+        </tr>
 
-    <!-- STEP 3 -->
-    <div class="flow-col before">
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <div class="step-title">口頭で掲載情報を受け取る</div>
-          <div class="step-desc">スタイリストから「どの媒体に・どのアイテムが・<br>どのテーマで採用されるか」を口頭や連絡で受け取る</div>
-          <span class="badge-pain">情報漏れ・聞き間違いリスク</span>
-        </div>
-      </div>
-    </div>
-    <div class="center-col">
-      <div class="arrow-row">→</div>
-    </div>
-    <div class="flow-col after">
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <div class="step-title">返却ダイアログで返却＋掲載を同時登録</div>
-          <div class="step-desc">伝票番号を入力するだけでアイテム一覧が表示。<br>返却チェック・掲載情報をその場で確定</div>
-          <span class="badge-good">1画面で完結・入力漏れ防止</span>
-        </div>
-      </div>
-    </div>
+        <tr>
+          <td class="cell-before">
+            Excel に掲載情報を手入力<br>
+            <small>所定フォーマットのファイルを開き、1件ずつ転記</small><br>
+            <span class="tag tag-issue">転記ミス・工数大・二重入力</span>
+          </td>
+          <td class="step-cell">4</td>
+          <td class="cell-after">
+            掲載リストに自動で転記<br>
+            <small>手入力・転記作業は一切不要</small><br>
+            <span class="tag tag-gain">転記ゼロ・自動で蓄積</span>
+          </td>
+        </tr>
 
-    <!-- STEP 4 -->
-    <div class="flow-col before">
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <div class="step-title">Excel に掲載情報を手入力</div>
-          <div class="step-desc">所定のフォーマットのExcelを開き、<br>受け取った情報をひとつひとつ転記</div>
-          <span class="badge-pain">転記ミス・工数大・二重入力</span>
-        </div>
-      </div>
-    </div>
-    <div class="center-col">
-      <div class="arrow-row">→</div>
-    </div>
-    <div class="flow-col after">
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <div class="step-title">掲載リストに自動転記</div>
-          <div class="step-desc">登録と同時に掲載リストマスタへ自動保存。<br>手入力・転記作業は不要</div>
-          <span class="badge-good">転記ゼロ・自動で蓄積</span>
-        </div>
-      </div>
-    </div>
+        <tr>
+          <td class="cell-before">
+            月別タブを手動で整形・保存<br>
+            <small>毎月フォーマットを整えてタブを作成</small><br>
+            <span class="tag tag-issue">毎月の整形作業に時間がかかる</span>
+          </td>
+          <td class="step-cell">5</td>
+          <td class="cell-after">
+            ボタン1つで整形シートを自動生成<br>
+            <small>月と担当者を選ぶだけ。種別ごとに整理・公開日順に並ぶ</small><br>
+            <span class="tag tag-gain">数秒で完成・フォーマット崩れなし</span>
+          </td>
+        </tr>
 
-    <!-- STEP 5 -->
-    <div class="flow-col before">
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-content">
-          <div class="step-title">月別タブを手動でフォーマット整理</div>
-          <div class="step-desc">月ごとにタブを作成し、情報を分類・並べ替え・<br>フォーマットを整えて保存</div>
-          <span class="badge-pain">毎月の整形作業に時間がかかる</span>
-        </div>
-      </div>
-    </div>
-    <div class="center-col">
-      <div class="arrow-row">→</div>
-    </div>
-    <div class="flow-col after">
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-content">
-          <div class="step-title">ボタン1つで整形シートを自動生成</div>
-          <div class="step-desc">月と担当者を選ぶだけで、種別ごとに整理された<br>フォーマット済みシートを自動生成</div>
-          <span class="badge-good">数秒で完成・フォーマット崩れなし</span>
-        </div>
-      </div>
-    </div>
-
+      </tbody>
+    </table>
   </div>
 
-  <!-- サマリー -->
   <div class="summary">
-    <div class="summary-card">
-      <div class="icon">✍️ → 💻</div>
-      <div class="title">手書き・手入力をなくす</div>
-      <div class="desc">伝票・掲載情報・月次整形、すべての手書き・転記作業をシステムが代替</div>
-    </div>
-    <div class="summary-card">
-      <div class="icon">📋 → 🔄</div>
-      <div class="title">フォーマット再入力が不要に</div>
-      <div class="desc">一度登録した情報が自動で掲載リスト・整形シートに反映。情報の二重入力ゼロ</div>
-    </div>
-    <div class="summary-card">
-      <div class="icon">📁 → ☁️</div>
-      <div class="title">情報を一元管理</div>
-      <div class="desc">貸出・返却・掲載のすべての情報がシステムに集約。過去データもすぐ検索可能</div>
+    <h2>導入でできるようになること</h2>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <h3>手入力をなくす</h3>
+        <p>伝票・掲載情報・月次整形、すべての転記作業をシステムが代替します。</p>
+      </div>
+      <div class="summary-item">
+        <h3>情報の再入力が不要に</h3>
+        <p>一度登録した情報が掲載リストと整形シートに自動で反映されます。</p>
+      </div>
+      <div class="summary-item">
+        <h3>情報を一元管理</h3>
+        <p>貸出・返却・掲載のすべてが一箇所に。過去データもすぐ確認できます。</p>
+      </div>
     </div>
   </div>
 
-  <div class="footer">BIGI PRESS ROOM — サンプル貸出管理システム</div>
+  <div class="footer">BIGI PRESS ROOM</div>
 
 </body>
 </html>

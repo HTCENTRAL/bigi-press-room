@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIGI PRESS ROOM — 操作マニュアル</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      background: #fff;
+      color: #222;
+    }
+
+    /* ヘッダー */
+    .header {
+      padding: 48px 40px 32px;
+      border-bottom: 1px solid #eee;
+    }
+    .header h1 { font-size: 22px; font-weight: bold; margin-bottom: 6px; }
+    .header p  { font-size: 13px; color: #888; }
+
+    /* ナビ */
+    nav {
+      border-bottom: 1px solid #eee;
+      padding: 0 40px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+    }
+    nav a {
+      display: block;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #888;
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+    nav a:hover { color: #222; border-bottom-color: #222; }
+
+    /* コンテンツ */
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 56px 20px 100px;
+    }
+
+    /* セクション */
+    .section {
+      margin-bottom: 64px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .section-sub {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+
+    /* メニューパス */
+    .menu-path {
+      display: inline-block;
+      font-size: 12px;
+      color: #888;
+      background: #f7f7f7;
+      padding: 6px 14px;
+      border-radius: 4px;
+      margin-bottom: 28px;
+    }
+
+    /* ステップリスト */
+    .steps { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: flex;
+      gap: 20px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border: 1.5px solid #222;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-body strong {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .step-body p {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    /* 入力項目リスト */
+    .fields {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .field {
+      font-size: 12px;
+      padding: 4px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      color: #444;
+    }
+    .field.req { border-color: #222; font-weight: bold; }
+    .req-note {
+      font-size: 11px;
+      color: #888;
+      margin-top: 8px;
+    }
+
+    /* 注意・ヒント */
+    .note {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.8;
+      padding: 14px 0 0;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 16px;
+    }
+
+    .divider { height: 1px; background: #eee; margin: 32px 0; }
+
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #ccc;
+      margin-top: 60px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>操作マニュアル</h1>
+    <p>BIGI PRESS ROOM — 各機能の使い方</p>
+  </div>
+
+  <nav>
+    <a href="#loan">新規貸出登録</a>
+    <a href="#return">返却処理</a>
+    <a href="#edit">伝票編集</a>
+    <a href="#publish">掲載リスト編集</a>
+    <a href="#sheet">整形シート生成</a>
+    <a href="#print">伝票印刷</a>
+  </nav>
+
+  <div class="content">
+
+    <!-- 新規貸出登録 -->
+    <div class="section" id="loan">
+      <div class="section-title">新規貸出登録</div>
+      <div class="section-sub">スタイリストに商品を貸し出すときに使います</div>
+      <div class="menu-path">メニュー › 新規貸出登録</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>メニューから「新規貸出登録」を選ぶ</strong>
+            <p>画面右側にフォームが開きます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>基本情報を入力する</strong>
+            <div class="fields">
+              <span class="field req">担当者名</span>
+              <span class="field req">スタイリスト名</span>
+              <span class="field">電話番号</span>
+              <span class="field req">貸出日</span>
+              <span class="field">撮影日</span>
+              <span class="field req">返却予定日</span>
+            </div>
+            <div class="req-note">太枠は必須項目</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>媒体セットを入力する</strong>
+            <p>掲載が予定されている媒体の情報を入力します。複数ある場合は「＋ 媒体を追加」で増やせます。</p>
+            <div class="fields">
+              <span class="field req">媒体名</span>
+              <span class="field req">月号</span>
+              <span class="field req">テーマ / 着用者</span>
+              <span class="field req">公開日</span>
+              <span class="field req">種別</span>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>アイテムを入力する</strong>
+            <p>貸し出す商品を入力します。複数の場合は「＋ アイテムを追加」で増やせます。</p>
+            <div class="fields">
+              <span class="field req">ブランド</span>
+              <span class="field req">品番</span>
+              <span class="field">色番</span>
+              <span class="field req">アイテム名</span>
+              <span class="field">単価</span>
+              <span class="field">備考</span>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>「登録する」を押す</strong>
+            <p>完了すると確認メッセージが表示されます。伝票番号が自動で割り当てられます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <strong>続けて登録する場合</strong>
+            <p>「続けて登録する」を押すとフォームがリセットされ、次の登録ができます。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">アイテムが2点あれば、システム内に2行として記録されます。重複ではなく正常な動作です。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 返却処理 -->
+    <div class="section" id="return">
+      <div class="section-title">返却処理</div>
+      <div class="section-sub">商品が返ってきたとき・掲載情報が確定したときに使います</div>
+      <div class="menu-path">メニュー › 返却処理</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>「返却処理」を選ぶ</strong>
+            <p>ダイアログが開きます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>伝票番号を入力して検索する</strong>
+            <p>5桁の伝票番号を入力し「検索」を押します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>返却するアイテムを確認する</strong>
+            <p>アイテム一覧が表示されます。全チェックがデフォルトです。返却しないアイテムはチェックを外してください。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>掲載情報を入力する（掲載がある場合）</strong>
+            <p>掲載が確定しているアイテムに「掲載あり」のチェックを入れ、媒体・テーマを選択します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>「返却・掲載を実行」を押す</strong>
+            <p>返却と掲載登録が同時に完了します。掲載リストにも自動で反映されます。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">掲載情報は後から「掲載リスト編集」で修正できます。返却だけ先に処理しても構いません。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 伝票編集 -->
+    <div class="section" id="edit">
+      <div class="section-title">伝票編集</div>
+      <div class="section-sub">登録済みの貸出情報を修正するときに使います</div>
+      <div class="menu-path">メニュー › 伝票編集</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>伝票番号を入力して読み込む</strong>
+            <p>修正したい伝票の番号を入力し「読み込む」を押します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>内容を修正する</strong>
+            <p>スタイリスト名・貸出日・媒体情報などを編集できます。媒体セットの追加・削除も可能です。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>「保存する」を押す</strong>
+            <p>変更内容が保存されます。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">誤って返却処理をした場合、伝票編集ダイアログ内の「未返却に戻す」ボタンで返却前の状態に戻せます。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 掲載リスト編集 -->
+    <div class="section" id="publish">
+      <div class="section-title">掲載リスト編集</div>
+      <div class="section-sub">掲載済みの情報を修正・削除するときに使います</div>
+      <div class="menu-path">メニュー › 掲載リスト編集</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>伝票番号を入力して検索する</strong>
+            <p>編集したい掲載データの伝票番号を入力します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>掲載データを確認する</strong>
+            <p>その伝票に紐づく掲載情報の一覧が表示されます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>編集または削除する</strong>
+            <p>「編集」ボタンで内容を修正、「削除」ボタンで行を削除できます。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">削除した掲載データは元に戻せません。間違えた場合は「返却処理」から再度掲載登録を行ってください。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 整形シート生成 -->
+    <div class="section" id="sheet">
+      <div class="section-title">整形シート生成</div>
+      <div class="section-sub">月次レポート用の整形シートをボタン1つで作成します</div>
+      <div class="menu-path">メニュー › 整形シート生成</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>「整形シート生成」を選ぶ</strong>
+            <p>ダイアログが開きます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>年月と担当者を選ぶ</strong>
+            <p>対象の年・月・担当者をリストから選択します。「全員」を選ぶことも可能です。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>「シートを生成」を押す</strong>
+            <p>「整形用_○年○月」という名前のシートが自動で作成されます。種別ごとに整理され、公開日順に並びます。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">同じ年月のシートを再生成すると、既存のシートは上書きされます。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 伝票印刷 -->
+    <div class="section" id="print">
+      <div class="section-title">伝票印刷</div>
+      <div class="section-sub">貸出伝票を印刷・PDF保存するときに使います</div>
+      <div class="menu-path">メニュー › 伝票印刷</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>伝票番号を入力する</strong>
+            <p>印刷したい伝票の番号を入力し「読み込む」を押します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>内容を確認して「印刷する」を押す</strong>
+            <p>ブラウザの印刷ダイアログが開きます。PDFとして保存することも可能です。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">新規登録直後に印刷したい場合は、メニューの「伝票印刷」から伝票番号を入力してください。</div>
+    </div>
+
+  </div>
+
+  <div class="footer">BIGI PRESS ROOM</div>
+
+</body>
+</html>
