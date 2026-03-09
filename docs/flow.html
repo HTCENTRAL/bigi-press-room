@@ -17,141 +17,118 @@
       text-align: center;
       margin-bottom: 48px;
     }
-    .header h1 {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-    .header p {
-      font-size: 13px;
-      color: #888;
-    }
+    .header h1 { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
+    .header p  { font-size: 13px; color: #888; }
 
     .pain-box {
-      max-width: 720px;
+      max-width: 780px;
       margin: 0 auto 48px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 20px 24px;
+      background: #fff9f0;
+      border-left: 3px solid #FF9900;
+      padding: 16px 20px;
+      border-radius: 0 6px 6px 0;
     }
-    .pain-box h3 {
-      font-size: 12px;
-      color: #888;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-    .pain-box ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .pain-box h3 { font-size: 12px; color: #FF9900; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.05em; }
+    .pain-box ul { list-style: none; }
     .pain-box li {
-      font-size: 14px;
-      padding-left: 18px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.9;
+      padding-left: 20px;
       position: relative;
-      color: #444;
     }
     .pain-box li::before {
-      content: '—';
+      content: '✗';
       position: absolute;
       left: 0;
       color: #bbb;
+      font-size: 12px;
     }
 
-    /* 比較テーブル */
-    .table-wrap {
-      max-width: 820px;
-      margin: 0 auto;
+    /* 列ラベル */
+    .flow-wrap { max-width: 780px; margin: 0 auto; }
+
+    .col-labels {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    thead th {
-      padding: 12px 20px;
-      font-size: 13px;
+    .col-labels .label {
+      flex: 1;
+      font-size: 12px;
       font-weight: bold;
-      text-align: center;
-      border-bottom: 2px solid #222;
+      letter-spacing: 0.05em;
+      padding: 0 4px;
     }
-    thead th.before { text-align: left; color: #888; }
-    thead th.step   { width: 48px; color: #bbb; font-weight: normal; }
-    thead th.after  { text-align: left; color: #222; }
+    .col-labels .before-label { color: #aaa; }
+    .col-labels .after-label  { color: #FF9900; }
+    .col-labels .arrow-spacer { width: 40px; flex-shrink: 0; }
 
-    tbody tr { border-bottom: 1px solid #eee; }
-    tbody tr:last-child { border-bottom: none; }
+    /* カードペア */
+    .step-row {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
 
-    td {
-      padding: 20px;
-      vertical-align: top;
-      font-size: 14px;
+    .card {
+      flex: 1;
+      padding: 20px 24px;
+      border-radius: 6px;
+    }
+    .card.before {
+      background: #f5f5f5;
+      color: #999;
+    }
+    .card.after {
+      background: #fff;
+      border: 1px solid #eee;
+      border-left: 3px solid #FF9900;
+      color: #222;
+    }
+
+    .card-main {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+    .card.before .card-main { color: #999; }
+    .card.after  .card-main { color: #222; }
+
+    .card-note {
+      font-size: 12px;
+      margin-top: 8px;
       line-height: 1.7;
     }
-    td.step-cell {
-      text-align: center;
-      vertical-align: middle;
-      color: #bbb;
-      font-size: 12px;
-      padding: 0;
-    }
+    .card.before .card-note { color: #bbb; }
+    .card.after  .card-note { color: #777; }
 
-    .cell-before { color: #666; }
-    .cell-after  { color: #111; font-weight: 500; }
-
-    .tag {
-      display: inline-block;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      margin-top: 6px;
-      font-weight: bold;
+    .arrow {
+      width: 40px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ccc;
+      font-size: 20px;
     }
-    .tag-issue { background: #f5f5f5; color: #999; }
-    .tag-gain  { background: #f0f8f0; color: #27ae60; }
-    .tag-same  { background: #f5f5f5; color: #aaa; }
 
     /* サマリー */
     .summary {
-      max-width: 820px;
+      max-width: 780px;
       margin: 56px auto 0;
-      border-top: 1px solid #eee;
       padding-top: 40px;
+      border-top: 1px solid #eee;
     }
-    .summary h2 {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 24px;
-      letter-spacing: 0.05em;
-    }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-    .summary-item {
-      padding: 20px;
-      border: 1px solid #eee;
-      border-radius: 8px;
-    }
-    .summary-item h3 {
-      font-size: 13px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-    .summary-item p {
-      font-size: 12px;
-      color: #777;
-      line-height: 1.7;
-    }
+    .summary h2 { font-size: 13px; color: #aaa; letter-spacing: 0.05em; margin-bottom: 24px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .summary-item { padding: 20px; border: 1px solid #eee; border-radius: 8px; }
+    .summary-item h3 { font-size: 13px; font-weight: bold; margin-bottom: 8px; }
+    .summary-item p  { font-size: 12px; color: #777; line-height: 1.8; }
 
-    .footer {
-      text-align: center;
-      margin-top: 60px;
-      font-size: 11px;
-      color: #ccc;
-    }
+    .footer { text-align: center; margin-top: 60px; font-size: 11px; color: #ccc; }
   </style>
 </head>
 <body>
@@ -169,86 +146,74 @@
     </ul>
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th class="before">導入前（アナログ）</th>
-          <th class="step"></th>
-          <th class="after">導入後（システム）</th>
-        </tr>
-      </thead>
-      <tbody>
+  <div class="flow-wrap">
 
-        <tr>
-          <td class="cell-before">
-            紙の伝票に手書きでメモ<br>
-            <small>ブランド・商品情報・媒体・テーマを記入</small><br>
-            <span class="tag tag-issue">手書きミス・紛失リスク</span>
-          </td>
-          <td class="step-cell">1</td>
-          <td class="cell-after">
-            フォームから入力して登録<br>
-            <small>伝票番号は自動発行。データはクラウドに保存</small><br>
-            <span class="tag tag-gain">入力ガイド付き・紛失ゼロ</span>
-          </td>
-        </tr>
+    <div class="col-labels">
+      <div class="label before-label">導入前（アナログ）</div>
+      <div class="arrow-spacer"></div>
+      <div class="label after-label">導入後（システム）</div>
+    </div>
 
-        <tr>
-          <td class="cell-before">
-            スタイリストへ商品を貸し出し
-          </td>
-          <td class="step-cell">2</td>
-          <td class="cell-after">
-            スタイリストへ商品を貸し出し<br>
-            <span class="tag tag-same">変わらず</span>
-          </td>
-        </tr>
+    <div class="step-row">
+      <div class="card before">
+        <div class="card-main">✗ 手書きメモ</div>
+        <div class="card-note">紙の伝票にブランド・商品情報・媒体・テーマを記入。手書きミス・紛失リスクあり</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card after">
+        <div class="card-main">✓ フォームで登録</div>
+        <div class="card-note">伝票番号は自動発行。入力ガイド付きでクラウドに保存</div>
+      </div>
+    </div>
 
-        <tr>
-          <td class="cell-before">
-            スタイリストから口頭で掲載情報を受け取る<br>
-            <small>どの媒体に・どのアイテムが・どのテーマで採用されるか</small><br>
-            <span class="tag tag-issue">情報漏れ・聞き間違いリスク</span>
-          </td>
-          <td class="step-cell">3</td>
-          <td class="cell-after">
-            返却ダイアログで返却と掲載を同時に登録<br>
-            <small>伝票番号を入力するとアイテム一覧が表示され、その場で確定</small><br>
-            <span class="tag tag-gain">1画面で完結・入力漏れ防止</span>
-          </td>
-        </tr>
+    <div class="step-row">
+      <div class="card before">
+        <div class="card-main">貸し出し</div>
+        <div class="card-note">スタイリストへ商品を貸し出し</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card after">
+        <div class="card-main">貸し出し（変わらず）</div>
+        <div class="card-note">スタイリストへ商品を貸し出し</div>
+      </div>
+    </div>
 
-        <tr>
-          <td class="cell-before">
-            Excel に掲載情報を手入力<br>
-            <small>所定フォーマットのファイルを開き、1件ずつ転記</small><br>
-            <span class="tag tag-issue">転記ミス・工数大・二重入力</span>
-          </td>
-          <td class="step-cell">4</td>
-          <td class="cell-after">
-            掲載リストに自動で転記<br>
-            <small>手入力・転記作業は一切不要</small><br>
-            <span class="tag tag-gain">転記ゼロ・自動で蓄積</span>
-          </td>
-        </tr>
+    <div class="step-row">
+      <div class="card before">
+        <div class="card-main">✗ 口頭で情報を受け取る</div>
+        <div class="card-note">どの媒体に・どのアイテムが採用されるか口頭で確認。情報漏れリスクあり</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card after">
+        <div class="card-main">✓ 返却と掲載を同時登録</div>
+        <div class="card-note">伝票番号を入力するとアイテム一覧が表示され、1画面で完結</div>
+      </div>
+    </div>
 
-        <tr>
-          <td class="cell-before">
-            月別タブを手動で整形・保存<br>
-            <small>毎月フォーマットを整えてタブを作成</small><br>
-            <span class="tag tag-issue">毎月の整形作業に時間がかかる</span>
-          </td>
-          <td class="step-cell">5</td>
-          <td class="cell-after">
-            ボタン1つで整形シートを自動生成<br>
-            <small>月と担当者を選ぶだけ。種別ごとに整理・公開日順に並ぶ</small><br>
-            <span class="tag tag-gain">数秒で完成・フォーマット崩れなし</span>
-          </td>
-        </tr>
+    <div class="step-row">
+      <div class="card before">
+        <div class="card-main">✗ Excelに転記</div>
+        <div class="card-note">所定フォーマットのファイルを開き1件ずつ手入力。転記ミス・工数大</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card after">
+        <div class="card-main">✓ 自動で転記</div>
+        <div class="card-note">手入力・転記作業は一切不要。データが自動で蓄積</div>
+      </div>
+    </div>
 
-      </tbody>
-    </table>
+    <div class="step-row">
+      <div class="card before">
+        <div class="card-main">✗ 月別タブを手動作成</div>
+        <div class="card-note">毎月フォーマットを整えてタブを作成。作業に時間がかかる</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card after">
+        <div class="card-main">✓ ボタン1つで完了</div>
+        <div class="card-note">月と担当者を選ぶだけ。種別ごとに整理・公開日順で数秒で完成</div>
+      </div>
+    </div>
+
   </div>
 
   <div class="summary">
