@@ -33,6 +33,10 @@
     <label>月</label>
     <select id="selMonth"></select>
   </div>
+  <div class="row">
+    <label>担当者</label>
+    <select id="selStaff"><option value="">全員</option></select>
+  </div>
   <div class="row" style="margin-top:6px;">
     <button id="btnNext" onclick="goStep2()">次へ</button>
   </div>
@@ -65,6 +69,17 @@
         if (m === now.getMonth() + 1) opt2.selected = true;
         monthSel.appendChild(opt2);
       }
+      google.script.run
+        .withSuccessHandler(function(list) {
+          var staffSel = document.getElementById('selStaff');
+          list.forEach(function(name) {
+            var o = document.createElement('option');
+            o.value = name;
+            o.text = name;
+            staffSel.appendChild(o);
+          });
+        })
+        .getStaffList();
     })();
 
     function goStep2() {
@@ -75,6 +90,7 @@
     function doGenerate(splitByBrand) {
       var year  = Number(document.getElementById('selYear').value);
       var month = Number(document.getElementById('selMonth').value);
+      var staff = document.getElementById('selStaff').value;
       document.getElementById('btnSplit').disabled = true;
       document.getElementById('btnNoSplit').disabled = true;
       document.getElementById('spinner').style.display = 'block';
@@ -104,7 +120,7 @@
           msgEl.textContent = 'エラー: ' + err.message;
           msgEl.style.display = 'block';
         })
-        .generateFormattedSheet({ year: year, month: month, splitByBrand: splitByBrand });
+        .generateFormattedSheet({ year: year, month: month, splitByBrand: splitByBrand, staff: staff });
     }
   </script>
 </body>

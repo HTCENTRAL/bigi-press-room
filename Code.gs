@@ -921,9 +921,16 @@ function generateFormattedSheet(params) {
     var month = Number(params.month);
     var splitByBrand = params.splitByBrand === true;
     var items = getPublishDataForMonth(year, month);
+    if (params.staff) {
+      items = items.filter(function(it) { return it.staff === params.staff; });
+    }
+    if (items.length === 0) {
+      return { success: false, message: '対象データが0件でした。' };
+    }
     var brandName = getBrandName();
     var monthLabel = month + '月';
-    var sheetName = '掲載リスト_' + month + '月';
+    var staffLabel = params.staff || '全員';
+    var sheetName = staffLabel + '_' + month + '月_掲載リスト';
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var outSheet = ss.getSheetByName(sheetName);
@@ -931,7 +938,7 @@ function generateFormattedSheet(params) {
       outSheet.clearContents();
       outSheet.clearFormats();
     } else {
-      outSheet = ss.insertSheet(sheetName);
+      outSheet = ss.insertSheet(sheetName, ss.getSheets().length);
     }
 
     var currentRow = 1;
