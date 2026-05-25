@@ -81,8 +81,6 @@
         margin-top: 14px; border-top: 2px solid #000; padding-top: 8px;
         font-size: 9.5pt;
       }
-      .sign-row { display: flex; gap: 40px; margin-top: 8px; }
-      .sign-row span { display: inline-block; border-bottom: 1px solid #000; width: 200px; }
     }
   </style>
 </head>
@@ -222,11 +220,15 @@
 
     // 基本情報
     html += '<div class="info-row">' +
-      '<span>貸出日：' + esc(d.loanDate) + '</span>' +
-      '<span>返却予定日：' + esc(d.plannedReturnDate) + '</span>' +
+      '<span>起票日：' + esc(d.loanDate) + '</span>' +
+      (d.pickupDate ? '<span>ピックアップ日：' + esc(d.pickupDate) + '</span>' : '') +
       '</div>';
     html += '<div class="info-row">' +
-      '<span>スタイリスト：' + esc(d.stylist) + ' 様</span>' +
+      '<span>返却予定日：' + esc(d.plannedReturnDate) + '</span>' +
+      (d.partialReturnDate ? '<span>一部返却日：' + esc(d.partialReturnDate) + '</span>' : '') +
+      '</div>';
+    html += '<div class="info-row">' +
+      '<span>お名前：' + esc(d.name) + ' 様</span>' +
       (d.phone ? '<span>TEL：' + esc(d.phone) + '</span>' : '') +
       '</div>';
 
@@ -259,7 +261,7 @@
     html += '<section><h2>貸出アイテム</h2>';
     html += '<table><thead><tr>' +
       '<th style="width:24px;">No</th><th>ブランド</th><th>品番</th>' +
-      '<th>色番</th><th>上代</th><th>アイテム名</th><th>掲載媒体No</th>' +
+      '<th>カラー</th><th>単価(税込)</th><th>アイテム名</th><th>掲載媒体No</th>' +
       '</tr></thead><tbody>';
     d.items.forEach(function(it, i) {
       var priceStr = it.price ? '¥' + Number(it.price).toLocaleString() : '';
@@ -310,11 +312,9 @@
 
     // フッター
     html += '<div class="slip-footer">' +
-      'ご返却は10:00〜18:00（12:00〜13:00を除く）でお願いいたします。' +
-      '<div class="sign-row">' +
-      '<span>スタイリスト確認: </span>' +
-      '<span>日付: </span>' +
-      '</div></div>';
+      'ご返却は10:00〜18:00（12:00〜13:00を除く）でお願いいたします。<br>' +
+      '環境への配慮からハンガーカバーを再利用させていただく場合がございます。ご了承くださいませ。' +
+      '</div>';
 
     document.getElementById('printContent').innerHTML = html;
   }

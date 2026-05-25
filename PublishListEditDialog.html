@@ -139,23 +139,23 @@
         '</div>' +
       '</div>' +
       '<div class="pub-card-grid">' +
-        field('メディア名', 'f_media_' + idx, row.media, 'text') +
-        field('種別', 'f_type_' + idx, row.type, 'text') +
-        field('掲載号', 'f_issue_' + idx, row.issue, 'text') +
-        fieldDate('公開日', 'f_rd_' + idx, toDateInput(row.releaseDate)) +
-        field('テーマ/着用者', 'f_theme_' + idx, row.theme, 'text', true) +
-        field('スタイリスト', 'f_stylist_' + idx, row.stylist, 'text') +
-        field('ブランド名', 'f_brand_' + idx, row.brand, 'text') +
-        field('品番', 'f_code_' + idx, row.itemCode, 'text') +
-        field('色番', 'f_color_' + idx, row.colorCode, 'text') +
-        fieldNum('上代', 'f_price_' + idx, row.price) +
-        field('アイテム', 'f_item_' + idx, row.itemName, 'text', true) +
-        field('頁', 'f_page_' + idx, row.page, 'text') +
-        field('担当者名', 'f_staff_' + idx, row.staff, 'text') +
-        field('画像/リンク', 'f_link_' + idx, row.imageLink, 'text', true) +
+        field('種別',        'f_type_'      + idx, row.type,      'text') +
+        field('媒体名',      'f_media_'     + idx, row.media,     'text', true) +
+        field('月号/放送局',  'f_issue_'     + idx, row.issue,     'text') +
+        fieldDate('公開日',  'f_rd_'        + idx, toDateInput(row.releaseDate)) +
+        field('テーマ/着用者','f_theme_'     + idx, row.theme,     'text', true) +
+        field('スタイリスト', 'f_stylist_'   + idx, row.stylist,   'text') +
+        field('メインブランド','f_mainBrand_' + idx, row.mainBrand, 'text') +
+        field('ブランド名',   'f_brand_'     + idx, row.brand,     'text') +
+        field('品番',        'f_code_'      + idx, row.itemCode,  'text') +
+        field('カラー',      'f_color_'     + idx, row.colorCode, 'text') +
+        field('カラー名',    'f_colorName_' + idx, row.colorName, 'text') +
+        fieldNum('単価(税込)','f_price_'     + idx, row.price) +
+        field('アイテム',    'f_item_'      + idx, row.itemName,  'text', true) +
+        field('頁',          'f_page_'      + idx, row.page,      'text') +
+        field('画像/リンク', 'f_link_'      + idx, row.imageLink, 'text', true) +
       '</div>';
 
-    // Store slipNo for later save
     card.dataset.slipNo = row.slipNo;
     return card;
   }
@@ -182,10 +182,10 @@
   }
 
   function saveRow(idx, rowIndex) {
-    var card = document.getElementById('card_' + idx);
+    var card   = document.getElementById('card_' + idx);
     var slipNo = card.dataset.slipNo;
-    var btn = document.getElementById('savebtn_' + idx);
-    var st = document.getElementById('st_' + idx);
+    var btn    = document.getElementById('savebtn_' + idx);
+    var st     = document.getElementById('st_' + idx);
 
     btn.disabled = true;
     btn.textContent = '保存中...';
@@ -193,24 +193,24 @@
     st.className = 'save-status';
 
     var rd = document.getElementById('f_rd_' + idx).value;
-    var rdFormatted = rd ? rd.replace(/-/g, '/') : '';
 
     var data = {
-      slipNo:    slipNo,
-      media:     document.getElementById('f_media_' + idx).value.trim(),
-      type:      document.getElementById('f_type_' + idx).value.trim(),
-      issue:     document.getElementById('f_issue_' + idx).value.trim(),
-      releaseDate: rdFormatted,
-      theme:     document.getElementById('f_theme_' + idx).value.trim(),
-      stylist:   document.getElementById('f_stylist_' + idx).value.trim(),
-      brand:     document.getElementById('f_brand_' + idx).value.trim(),
-      itemCode:  document.getElementById('f_code_' + idx).value.trim(),
-      colorCode: document.getElementById('f_color_' + idx).value.trim(),
-      price:     Number(document.getElementById('f_price_' + idx).value) || 0,
-      itemName:  document.getElementById('f_item_' + idx).value.trim(),
-      page:      document.getElementById('f_page_' + idx).value.trim(),
-      staff:     document.getElementById('f_staff_' + idx).value.trim(),
-      imageLink: document.getElementById('f_link_' + idx).value.trim()
+      slipNo:     slipNo,
+      type:       document.getElementById('f_type_'      + idx).value.trim(),
+      media:      document.getElementById('f_media_'     + idx).value.trim(),
+      issue:      document.getElementById('f_issue_'     + idx).value.trim(),
+      releaseDate: rd ? rd.replace(/-/g, '/') : '',
+      theme:      document.getElementById('f_theme_'     + idx).value.trim(),
+      stylist:    document.getElementById('f_stylist_'   + idx).value.trim(),
+      mainBrand:  document.getElementById('f_mainBrand_' + idx).value.trim(),
+      brand:      document.getElementById('f_brand_'     + idx).value.trim(),
+      itemCode:   document.getElementById('f_code_'      + idx).value.trim(),
+      colorCode:  document.getElementById('f_color_'     + idx).value.trim(),
+      colorName:  document.getElementById('f_colorName_' + idx).value.trim(),
+      price:      Number(document.getElementById('f_price_' + idx).value) || 0,
+      itemName:   document.getElementById('f_item_'      + idx).value.trim(),
+      page:       document.getElementById('f_page_'      + idx).value.trim(),
+      imageLink:  document.getElementById('f_link_'      + idx).value.trim()
     };
 
     google.script.run
@@ -245,7 +245,6 @@
         if (res.success) {
           var card = document.getElementById('card_' + idx);
           if (card) card.remove();
-          // Re-search to get fresh rowIndices
           showMsg('削除しました。行番号が変わるため、再度検索してください。', 'success');
           document.getElementById('resultArea').style.display = 'none';
         } else {

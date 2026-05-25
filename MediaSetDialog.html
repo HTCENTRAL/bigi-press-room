@@ -11,7 +11,7 @@
     label:first-of-type { margin-top: 0; }
     input[type=text], input[type=date], select {
       width: 100%; padding: 6px 9px; border: 1px solid #ccc;
-      border-radius: 4px; font-size: 13px;
+      border-radius: 4px; font-size: 13px; background: #fff;
     }
     input:focus, select:focus { outline: none; border-color: #4a90d9; }
     .search-btn {
@@ -27,9 +27,12 @@
       font-weight: bold; font-size: 11px; color: #666; text-transform: uppercase;
       letter-spacing: 0.5px; margin-bottom: 8px;
     }
-    .basic-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
-    select { width: 100%; padding: 6px 9px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
-    select:focus { outline: none; border-color: #4a90d9; }
+    .basic-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .basic-grid .full { grid-column: 1 / -1; }
+    .notice {
+      background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px;
+      padding: 8px 10px; font-size: 12px; color: #6d4c00; margin-top: 8px;
+    }
     .revert-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; }
     .revert-btn {
       padding: 6px 14px; background: #fff; color: #cc0000;
@@ -103,23 +106,29 @@
   <div class="section">
     <div class="section-title">基本情報</div>
     <div class="basic-grid">
-      <div>
-        <label>担当者名</label>
-        <select id="editStaff">
-          <option value="">--</option>
-        </select>
+      <div class="full">
+        <label>起票者名</label>
+        <input type="text" id="editStaff" placeholder="例：山田 太郎">
       </div>
       <div>
-        <label>スタイリスト名</label>
-        <input type="text" id="editStylist" placeholder="スタイリスト名">
+        <label>お名前 <span style="color:red">*</span></label>
+        <input type="text" id="editName" placeholder="例：石上 恵">
       </div>
       <div>
         <label>電話番号</label>
         <input type="text" id="editPhone" placeholder="例：090-1234-5678">
       </div>
       <div>
+        <label>ピックアップ日</label>
+        <input type="date" id="editPickupDate">
+      </div>
+      <div>
         <label>返却予定日</label>
         <input type="date" id="editPlannedReturn">
+      </div>
+      <div>
+        <label>一部返却日</label>
+        <input type="date" id="editPartialReturn">
       </div>
     </div>
     <div class="row-count" id="rowCount"></div>
@@ -150,7 +159,7 @@
           <input type="text" id="nm_media" placeholder="例：Vogue">
         </div>
         <div>
-          <label>月号</label>
+          <label>月号/放送局</label>
           <input type="text" id="nm_issue" placeholder="例：4月号">
         </div>
         <div>
@@ -173,6 +182,15 @@
     </div>
   </div>
 
+  <!-- 貸出アイテム（注意書きのみ） -->
+  <div class="section">
+    <div class="section-title">貸出アイテム</div>
+    <div class="notice">
+      ⚠ 貸出アイテムの追加・削除はできません。<br>
+      追加 → 新規貸出登録、削除 → 返却処理をしてください。
+    </div>
+  </div>
+
   <div class="footer">
     <button class="cancel-btn" onclick="google.script.host.close()">キャンセル</button>
     <button class="save-btn" id="saveBtn" onclick="saveAll()">保存する</button>
@@ -180,23 +198,8 @@
 </div>
 
 <script>
-  // mediaSets: JS配列でオブジェクト管理
   var mediaSets = [];
   var msCounter = 0;
-
-  // 担当者リスト読み込み
-  google.script.run
-    .withSuccessHandler(function(list) {
-      var sel = document.getElementById('editStaff');
-      list.forEach(function(name) {
-        var opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        sel.appendChild(opt);
-      });
-    })
-    .withFailureHandler(function() {})
-    .getStaffList();
 
   function showMsg(text, type) {
     document.getElementById('msgArea').innerHTML = text
@@ -228,46 +231,34 @@
   }
 
   function loadSlipData(res) {
-    document.getElementById('editStylist').value = res.stylist || '';
-    document.getElementById('editPhone').value = res.phone || '';
-    // plannedReturnDate is yyyy/MM/dd from server, convert to yyyy-MM-dd for date input
-    var pr = res.plannedReturnDate || '';
-    document.getElementById('editPlannedReturn').value = pr.replace(/\//g, '-');
-    document.getElementById('rowCount').textContent = '対象: ' + res.rowCount + ' アイテム行';
+    document.getElementById('editStaff').value        = res.staff  || '';
+    document.getElementById('editName').value         = res.name   || '';
+    document.getElementById('editPhone').value        = res.phone  || '';
+    document.getElementById('editPickupDate').value   = toDateInput(res.pickupDate);
+    document.getElementById('editPlannedReturn').value = toDateInput(res.plannedReturnDate);
+    document.getElementById('editPartialReturn').value = toDateInput(res.partialReturnDate);
+    document.getElementById('rowCount').textContent   = '対象: ' + res.rowCount + ' アイテム行';
 
-    // 担当者名セット
-    var staffSel = document.getElementById('editStaff');
-    staffSel.value = res.staff || '';
-    if (!staffSel.value && res.staff) {
-      // マスタにない場合は選択肢を追加
-      var opt = document.createElement('option');
-      opt.value = res.staff;
-      opt.textContent = res.staff;
-      staffSel.appendChild(opt);
-      staffSel.value = res.staff;
-    }
-
-    // 返却済行がある場合のみ「未返却に戻す」ボタンを表示
     var revertSection = document.getElementById('revertSection');
     document.getElementById('revertStatus').textContent = '';
-    if ((res.returnedCount || 0) > 0) {
-      revertSection.style.display = 'block';
-    } else {
-      revertSection.style.display = 'none';
-    }
+    revertSection.style.display = (res.returnedCount || 0) > 0 ? 'block' : 'none';
 
-    mediaSets = res.mediaSets.map(function(ms, i) {
+    mediaSets = res.mediaSets.map(function(ms) {
       return {
-        id: ++msCounter,
-        media: ms.media || '',
-        type: ms.type || '雑誌(紙面)',
-        issue: ms.issue || '',
-        theme: ms.theme || '',
+        id:          ++msCounter,
+        media:       ms.media       || '',
+        type:        ms.type        || '雑誌(紙面)',
+        issue:       ms.issue       || '',
+        theme:       ms.theme       || '',
         releaseDate: ms.releaseDate || '',
-        shootDate: ms.shootDate || ''
+        shootDate:   ms.shootDate   || ''
       };
     });
     renderMediaSets();
+  }
+
+  function toDateInput(s) {
+    return (s || '').replace(/\//g, '-');
   }
 
   function renderMediaSets() {
@@ -287,8 +278,8 @@
     card.className = 'ms-card';
     card.id = 'ms_card_' + ms.id;
 
-    var viewText = [ms.type, ms.media, ms.issue, ms.theme, ms.releaseDate, ms.shootDate ? '撮影:' + ms.shootDate : '']
-      .filter(Boolean).join(' / ');
+    var viewText = [ms.type, ms.media, ms.issue, ms.theme, ms.releaseDate,
+      ms.shootDate ? '撮影:' + ms.shootDate : ''].filter(Boolean).join(' / ');
 
     card.innerHTML =
       '<div class="ms-view" id="ms_view_' + ms.id + '">' +
@@ -301,12 +292,10 @@
       '<div class="ms-edit" id="ms_edit_' + ms.id + '">' +
         '<div class="ms-edit-grid">' +
           '<div class="full"><label>種別</label>' +
-            '<select id="ms_type_' + ms.id + '">' +
-              typeOptions(ms.type) +
-            '</select></div>' +
+            '<select id="ms_type_' + ms.id + '">' + typeOptions(ms.type) + '</select></div>' +
           '<div class="full"><label>媒体名 <span style="color:red">*</span></label>' +
             '<input type="text" id="ms_media_' + ms.id + '" value="' + escHtml(ms.media) + '" placeholder="例：Vogue"></div>' +
-          '<div><label>月号</label>' +
+          '<div><label>月号/放送局</label>' +
             '<input type="text" id="ms_issue_' + ms.id + '" value="' + escHtml(ms.issue) + '" placeholder="例：4月号"></div>' +
           '<div><label>公開日</label>' +
             '<input type="date" id="ms_rd_' + ms.id + '" value="' + toDateInput(ms.releaseDate) + '"></div>' +
@@ -334,11 +323,6 @@
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function toDateInput(s) {
-    // yyyy/MM/dd → yyyy-MM-dd
-    return (s || '').replace(/\//g, '-');
-  }
-
   function editMs(id) {
     document.getElementById('ms_view_' + id).style.display = 'none';
     document.getElementById('ms_edit_' + id).style.display = 'block';
@@ -352,15 +336,14 @@
   function saveMs(id) {
     var media = document.getElementById('ms_media_' + id).value.trim();
     if (!media) { alert('媒体名を入力してください。'); return; }
-
     var ms = mediaSets.find(function(m) { return m.id === id; });
     if (!ms) return;
-    ms.media = media;
-    ms.type = document.getElementById('ms_type_' + id).value;
-    ms.issue = document.getElementById('ms_issue_' + id).value.trim();
-    ms.theme = document.getElementById('ms_theme_' + id).value.trim();
+    ms.media       = media;
+    ms.type        = document.getElementById('ms_type_' + id).value;
+    ms.issue       = document.getElementById('ms_issue_' + id).value.trim();
+    ms.theme       = document.getElementById('ms_theme_' + id).value.trim();
     ms.releaseDate = document.getElementById('ms_rd_' + id).value;
-    ms.shootDate = document.getElementById('ms_sd_' + id).value;
+    ms.shootDate   = document.getElementById('ms_sd_' + id).value;
     renderMediaSets();
   }
 
@@ -383,18 +366,15 @@
   function addNewMediaSet() {
     var media = document.getElementById('nm_media').value.trim();
     if (!media) { alert('媒体名を入力してください。'); return; }
-
     mediaSets.push({
-      id: ++msCounter,
-      media: media,
-      type: document.getElementById('nm_type').value,
-      issue: document.getElementById('nm_issue').value.trim(),
-      theme: document.getElementById('nm_theme').value.trim(),
+      id:          ++msCounter,
+      media:       media,
+      type:        document.getElementById('nm_type').value,
+      issue:       document.getElementById('nm_issue').value.trim(),
+      theme:       document.getElementById('nm_theme').value.trim(),
       releaseDate: document.getElementById('nm_releaseDate').value,
-      shootDate: document.getElementById('nm_shootDate').value
+      shootDate:   document.getElementById('nm_shootDate').value
     });
-
-    // Clear new form
     ['nm_media','nm_issue','nm_theme','nm_releaseDate','nm_shootDate'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
@@ -405,11 +385,10 @@
 
   function saveAll() {
     var slipNo = document.getElementById('slipNo').value.trim();
-    var stylist = document.getElementById('editStylist').value.trim();
-    if (!stylist) { alert('スタイリスト名を入力してください。'); return; }
+    var name   = document.getElementById('editName').value.trim();
+    if (!name) { alert('お名前を入力してください。'); return; }
     if (mediaSets.length === 0) { alert('媒体セットを1つ以上追加してください。'); return; }
 
-    // Check for any media set still in edit mode - save them first
     var editModes = document.querySelectorAll('[id^="ms_edit_"]');
     for (var i = 0; i < editModes.length; i++) {
       if (editModes[i].style.display === 'block') {
@@ -423,18 +402,20 @@
     btn.textContent = '保存中...';
 
     var params = {
-      staff: document.getElementById('editStaff').value,
-      stylist: stylist,
-      phone: document.getElementById('editPhone').value.trim(),
+      staff:             document.getElementById('editStaff').value.trim(),
+      name:              name,
+      phone:             document.getElementById('editPhone').value.trim(),
+      pickupDate:        document.getElementById('editPickupDate').value.replace(/-/g, '/'),
       plannedReturnDate: document.getElementById('editPlannedReturn').value.replace(/-/g, '/'),
-      mediaSets: mediaSets.map(function(ms) {
+      partialReturnDate: document.getElementById('editPartialReturn').value.replace(/-/g, '/'),
+      mediaSets:         mediaSets.map(function(ms) {
         return {
-          media: ms.media,
-          type: ms.type,
-          issue: ms.issue,
-          theme: ms.theme,
+          media:       ms.media,
+          type:        ms.type,
+          issue:       ms.issue,
+          theme:       ms.theme,
           releaseDate: ms.releaseDate,
-          shootDate: ms.shootDate
+          shootDate:   ms.shootDate
         };
       })
     };
@@ -462,7 +443,7 @@
     if (!confirm('返却済データを取り消し、掲載リストマスタの該当行も削除します。よろしいですか？')) return;
 
     var btn = document.querySelector('.revert-btn');
-    var st = document.getElementById('revertStatus');
+    var st  = document.getElementById('revertStatus');
     btn.disabled = true;
     st.textContent = '処理中...';
     st.style.color = '#888';

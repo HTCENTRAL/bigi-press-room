@@ -9,11 +9,12 @@
     .section-title { font-weight: bold; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
     label { display: block; font-size: 12px; color: #555; margin-bottom: 3px; margin-top: 8px; }
     label:first-of-type { margin-top: 0; }
-    input[type=text], input[type=date], input[type=number] {
+    input[type=text], input[type=date], input[type=number], select {
       width: 100%; padding: 7px 9px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s; background: #fff;
     }
-    input:focus { outline: none; border-color: #4a90d9; }
+    input:focus, select:focus { outline: none; border-color: #4a90d9; }
+    input.auto-filled { background: #f0f7ff; color: #333; }
     .media-set {
       padding: 10px; background: #f7f9fc; border: 1px solid #dce7f5;
       border-radius: 5px; margin-bottom: 8px; position: relative;
@@ -21,11 +22,12 @@
     .media-set-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .media-set-grid .full { grid-column: 1 / -1; }
     .item-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
       padding: 10px; background: #f7f9fc; border: 1px solid #dce7f5;
       border-radius: 5px; margin-bottom: 8px; position: relative;
     }
-    .item-row .full { grid-column: 1 / -1; }
+    .item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .item-grid .full { grid-column: 1 / -1; }
+    .lookup-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: end; margin-bottom: 6px; }
     .remove-btn {
       position: absolute; top: 6px; right: 8px;
       background: none; border: none; color: #cc0000; font-size: 16px;
@@ -38,6 +40,13 @@
       font-size: 13px; margin-top: 2px; transition: background 0.2s;
     }
     .add-btn:hover { background: #d0e1fd; }
+    .lookup-btn {
+      padding: 7px 12px; background: #1a56db; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 12px;
+      white-space: nowrap; height: 34px;
+    }
+    .lookup-btn:hover { background: #1545b3; }
+    .lookup-btn:disabled { background: #aaa; cursor: not-allowed; }
     .submit-btn {
       width: calc(100% - 16px); margin: 8px; padding: 12px;
       background: #1a56db; color: #fff; border: none; border-radius: 6px;
@@ -52,26 +61,10 @@
     .result-box.error { background: #fce8e6; border-color: #f5c6c3; }
     .result-title { font-weight: bold; margin-bottom: 8px; color: #1e6b2e; }
     .result-box.error .result-title { color: #c0392b; }
-    textarea.msg-text {
-      width: 100%; height: 160px; font-size: 12px; font-family: monospace;
-      border: 1px solid #ccc; border-radius: 4px; padding: 8px; resize: vertical;
-    }
-    .copy-btn {
-      margin-top: 6px; padding: 6px 14px; background: #fff; border: 1px solid #1a56db;
-      color: #1a56db; border-radius: 4px; cursor: pointer; font-size: 12px;
-    }
-    .copy-btn:hover { background: #e8f0fe; }
-    .copied { color: #1e6b2e; font-size: 12px; margin-left: 8px; display: none; }
-    .print-btn {
-      margin-top: 8px; padding: 8px 16px; background: #e67e22; color: #fff;
-      border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold;
-      display: block; width: 100%;
-    }
-    .print-btn:hover { background: #ca6f1e; }
     .reset-btn {
       padding: 8px 16px; background: #fff; color: #1a56db;
       border: 1px solid #1a56db; border-radius: 4px; cursor: pointer;
-      font-size: 13px; font-weight: bold; white-space: nowrap;
+      font-size: 13px; font-weight: bold; white-space: nowrap; width: 100%;
     }
     .reset-btn:hover { background: #e8f0fe; }
   </style>
@@ -79,17 +72,16 @@
 <body>
 
 <div class="section">
-  <div class="section-title">担当者</div>
-  <label>担当者名 <span style="color:red">*</span></label>
-  <select id="staff" style="width:100%;padding:7px 9px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
-    <option value="">-- 選択してください --</option>
-  </select>
+  <div class="section-title">起票者</div>
+  <label>起票者名 <span style="color:red">*</span></label>
+  <input type="text" id="staff" placeholder="例：山田 太郎">
 </div>
 
 <div class="section">
-  <div class="section-title">スタイリスト情報</div>
-  <label>スタイリスト名 <span style="color:red">*</span></label>
-  <input type="text" id="stylist" placeholder="例：石上 恵">
+  <div class="section-title">貸出先情報</div>
+  <label>お名前 <span style="color:red">*</span></label>
+  <input type="text" id="name" list="contactNameList" placeholder="例：石上 恵" autocomplete="off">
+  <datalist id="contactNameList"></datalist>
   <label>電話番号</label>
   <input type="text" id="phone" placeholder="例：090-1234-5678">
 </div>
@@ -102,8 +94,12 @@
 
 <div class="section">
   <div class="section-title">撮影情報</div>
+  <label>ピックアップ日</label>
+  <input type="date" id="pickupDate">
   <label>返却予定日</label>
   <input type="date" id="plannedReturnDate">
+  <label>一部返却日</label>
+  <input type="date" id="partialReturnDate">
 </div>
 
 <div class="section">
@@ -117,16 +113,43 @@
 <div class="result-box" id="resultBox">
   <div class="result-title" id="resultTitle"></div>
   <div id="resultMsg"></div>
-  <textarea class="msg-text" id="msgText" readonly></textarea>
-  <div id="copyArea">
-    <button class="copy-btn" onclick="copyMsg()">テキストをコピー</button>
-    <span class="copied" id="copiedMsg">コピーしました！</span>
-  </div>
 </div>
 
 <script>
   var mediaSetCount = 0;
   var itemCount = 0;
+  var contactMap = {};
+
+  // 貸出先マスタ読み込み（名前→電話番号のlookup用）
+  google.script.run
+    .withSuccessHandler(function(list) {
+      var dl = document.getElementById('contactNameList');
+      list.forEach(function(c) {
+        if (c.name) contactMap[c.name] = c.phone || '';
+        var opt = document.createElement('option');
+        opt.value = c.name;
+        dl.appendChild(opt);
+      });
+    })
+    .withFailureHandler(function() {})
+    .getContactList();
+
+  // お名前変更時に電話番号を自動補完
+  document.getElementById('name').addEventListener('change', function() {
+    var n = this.value.trim();
+    if (contactMap.hasOwnProperty(n)) {
+      document.getElementById('phone').value = contactMap[n];
+    }
+  });
+
+  // ピックアップ日のデフォルトを今日に設定
+  (function() {
+    var t = new Date();
+    var y = t.getFullYear();
+    var m = String(t.getMonth() + 1).padStart(2, '0');
+    var d = String(t.getDate()).padStart(2, '0');
+    document.getElementById('pickupDate').value = y + '-' + m + '-' + d;
+  })();
 
   function addMediaSet() {
     mediaSetCount++;
@@ -146,12 +169,12 @@
           '</select></div>' +
         '<div class="full"><label>媒体名 <span style="color:red">*</span></label>' +
           '<input type="text" id="' + id + '_media" placeholder="例：Vogue"></div>' +
-        '<div><label>月号 <span style="color:red">*</span></label>' +
-          '<input type="text" id="' + id + '_issue" placeholder="例：4月号" required></div>' +
+        '<div><label>月号/放送局 <span style="color:red">*</span></label>' +
+          '<input type="text" id="' + id + '_issue" placeholder="例：4月号"></div>' +
         '<div><label>公開日 <span style="color:red">*</span></label>' +
-          '<input type="date" id="' + id + '_releaseDate" required></div>' +
+          '<input type="date" id="' + id + '_releaseDate"></div>' +
         '<div class="full"><label>テーマ/着用者 <span style="color:red">*</span></label>' +
-          '<input type="text" id="' + id + '_theme" placeholder="例：夏コーデ/石上恵" required></div>' +
+          '<input type="text" id="' + id + '_theme" placeholder="例：夏コーデ/石上恵"></div>' +
         '<div><label>撮影日</label>' +
           '<input type="date" id="' + id + '_shootDate"></div>' +
       '</div>';
@@ -166,17 +189,60 @@
     div.id = id;
     div.innerHTML =
       '<button class="remove-btn" onclick="removeEl(\'' + id + '\')" title="削除">✕</button>' +
-      '<div class="full"><label>ブランド <span style="color:red">*</span></label>' +
-        '<input type="text" id="' + id + '_brand" placeholder="例：UNTITLED" required></div>' +
-      '<div class="full"><label>品番 <span style="color:red">*</span></label>' +
-        '<input type="text" id="' + id + '_code" placeholder="例：62AFP349" required></div>' +
-      '<div><label>色番 <span style="color:red">*</span></label>' +
-        '<input type="text" id="' + id + '_color" placeholder="例：(1)ベージュ" required></div>' +
-      '<div><label>単価 <span style="color:red">*</span></label>' +
-        '<input type="number" id="' + id + '_price" placeholder="60500" min="0" required></div>' +
-      '<div class="full"><label>アイテム名 <span style="color:red">*</span></label>' +
-        '<input type="text" id="' + id + '_name" placeholder="例：スラブツイードギャバジン" required></div>';
+      '<div class="lookup-row">' +
+        '<div><label>品番 <span style="color:red">*</span></label>' +
+          '<input type="text" id="' + id + '_code" placeholder="例：62AFP349"></div>' +
+        '<div><label>カラー <span style="color:red">*</span></label>' +
+          '<input type="text" id="' + id + '_color" placeholder="例：01"></div>' +
+        '<div><label style="visibility:hidden;">_</label>' +
+          '<button class="lookup-btn" id="' + id + '_lbtn" onclick="lookupItem(\'' + id + '\')">マスタ検索</button></div>' +
+      '</div>' +
+      '<div class="item-grid">' +
+        '<div><label>メインブランド</label>' +
+          '<input type="text" id="' + id + '_mainBrand" class="auto-filled" readonly placeholder="検索で自動入力"></div>' +
+        '<div><label>ブランド</label>' +
+          '<input type="text" id="' + id + '_brand" class="auto-filled" readonly placeholder="検索で自動入力"></div>' +
+        '<div><label>カラー名</label>' +
+          '<input type="text" id="' + id + '_colorName" class="auto-filled" placeholder="検索で自動入力"></div>' +
+        '<div><label>単価(税込) <span style="color:red">*</span></label>' +
+          '<input type="number" id="' + id + '_price" class="auto-filled" placeholder="60500" min="0"></div>' +
+        '<div class="full"><label>アイテム名 <span style="color:red">*</span></label>' +
+          '<input type="text" id="' + id + '_itemName" class="auto-filled" placeholder="検索で自動入力（直接入力も可）"></div>' +
+      '</div>';
     document.getElementById('itemList').appendChild(div);
+  }
+
+  function lookupItem(id) {
+    var code  = (document.getElementById(id + '_code')  || {}).value || '';
+    var color = (document.getElementById(id + '_color') || {}).value || '';
+    if (!code.trim() || !color.trim()) {
+      alert('品番とカラーを入力してからマスタ検索してください。');
+      return;
+    }
+    var btn = document.getElementById(id + '_lbtn');
+    btn.disabled = true;
+    btn.textContent = '検索中...';
+
+    google.script.run
+      .withSuccessHandler(function(result) {
+        btn.disabled = false;
+        btn.textContent = 'マスタ検索';
+        if (!result) {
+          alert('品番マスタに該当データが見つかりませんでした。\n直接入力してください。');
+          return;
+        }
+        document.getElementById(id + '_mainBrand').value = result.mainBrand || '';
+        document.getElementById(id + '_brand').value     = result.brand     || '';
+        document.getElementById(id + '_colorName').value = result.colorName || '';
+        document.getElementById(id + '_price').value     = result.price     || '';
+        document.getElementById(id + '_itemName').value  = result.itemName  || '';
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'マスタ検索';
+        alert('マスタ検索エラー: ' + err.message);
+      })
+      .lookupItemMaster(code.trim(), color.trim());
   }
 
   function removeEl(id) {
@@ -190,21 +256,21 @@
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
       var id = el.id;
-      var media = (document.getElementById(id + '_media') || {}).value || '';
-      if (!media.trim()) continue;
-      var issue = ((document.getElementById(id + '_issue') || {}).value || '').trim();
-      var theme = ((document.getElementById(id + '_theme') || {}).value || '').trim();
-      var releaseDate = (document.getElementById(id + '_releaseDate') || {}).value || '';
-      if (!issue) { alert('媒体「' + media.trim() + '」の月号を入力してください。'); return null; }
-      if (!theme) { alert('媒体「' + media.trim() + '」のテーマ/着用者を入力してください。'); return null; }
-      if (!releaseDate) { alert('媒体「' + media.trim() + '」の公開日を入力してください。'); return null; }
+      var media = ((document.getElementById(id + '_media') || {}).value || '').trim();
+      if (!media) continue;
+      var issue       = ((document.getElementById(id + '_issue')       || {}).value || '').trim();
+      var theme       = ((document.getElementById(id + '_theme')       || {}).value || '').trim();
+      var releaseDate = ((document.getElementById(id + '_releaseDate') || {}).value || '');
+      if (!issue)       { alert('媒体「' + media + '」の月号/放送局を入力してください。'); return null; }
+      if (!theme)       { alert('媒体「' + media + '」のテーマ/着用者を入力してください。'); return null; }
+      if (!releaseDate) { alert('媒体「' + media + '」の公開日を入力してください。'); return null; }
       sets.push({
-        media:       media.trim(),
+        type:        ((document.getElementById(id + '_type')      || {}).value || ''),
+        media:       media,
         issue:       issue,
         theme:       theme,
         releaseDate: releaseDate,
-        type:        (document.getElementById(id + '_type') || {}).value || '',
-        shootDate:   (document.getElementById(id + '_shootDate') || {}).value || ''
+        shootDate:   ((document.getElementById(id + '_shootDate') || {}).value || '')
       });
     }
     return sets;
@@ -215,23 +281,23 @@
     var els = document.querySelectorAll('#itemList .item-row');
     for (var i = 0; i < els.length; i++) {
       var row = els[i];
-      var id = row.id;
-      var code = ((document.getElementById(id + '_code') || {}).value || '').trim();
-      var name = ((document.getElementById(id + '_name') || {}).value || '').trim();
-      if (!code && !name) continue;
-      var brand = ((document.getElementById(id + '_brand') || {}).value || '').trim();
-      var colorCode = ((document.getElementById(id + '_color') || {}).value || '').trim();
-      var price = (document.getElementById(id + '_price') || {}).value || '';
-      if (!brand) { alert('アイテムのブランドを入力してください。'); return null; }
-      if (!code) { alert('アイテムの品番を入力してください。'); return null; }
-      if (!colorCode) { alert('アイテムの色番を入力してください。'); return null; }
-      if (!name) { alert('アイテム名を入力してください。'); return null; }
-      if (!price) { alert('アイテムの単価を入力してください。'); return null; }
+      var id  = row.id;
+      var code      = ((document.getElementById(id + '_code')      || {}).value || '').trim();
+      var colorCode = ((document.getElementById(id + '_color')     || {}).value || '').trim();
+      var itemName  = ((document.getElementById(id + '_itemName')  || {}).value || '').trim();
+      var price     = ((document.getElementById(id + '_price')     || {}).value || '').trim();
+      if (!code && !itemName) continue;
+      if (!code)      { alert('アイテムの品番を入力してください。'); return null; }
+      if (!colorCode) { alert('アイテムのカラーを入力してください。'); return null; }
+      if (!itemName)  { alert('アイテム名を入力してください。'); return null; }
+      if (!price)     { alert('アイテムの単価(税込)を入力してください。'); return null; }
       items.push({
-        brand:     brand,
+        mainBrand: ((document.getElementById(id + '_mainBrand') || {}).value || '').trim(),
+        brand:     ((document.getElementById(id + '_brand')     || {}).value || '').trim(),
         itemCode:  code,
         colorCode: colorCode,
-        itemName:  name,
+        colorName: ((document.getElementById(id + '_colorName') || {}).value || '').trim(),
+        itemName:  itemName,
         price:     price
       });
     }
@@ -239,10 +305,10 @@
   }
 
   function submit() {
-    var staff = document.getElementById('staff').value;
-    if (!staff) { alert('担当者名を選択してください。'); return; }
-    var stylist = document.getElementById('stylist').value.trim();
-    if (!stylist) { alert('スタイリスト名を入力してください。'); return; }
+    var staff = document.getElementById('staff').value.trim();
+    if (!staff) { alert('起票者名を入力してください。'); return; }
+    var name = document.getElementById('name').value.trim();
+    if (!name) { alert('お名前を入力してください。'); return; }
     var mediaSets = getMediaSets();
     if (mediaSets === null) return;
     if (mediaSets.length === 0) { alert('媒体セットを1つ以上追加してください。'); return; }
@@ -256,17 +322,17 @@
 
     var data = {
       staff:              staff,
-      stylist:            stylist,
+      name:               name,
       phone:              document.getElementById('phone').value.trim(),
       mediaSets:          mediaSets,
+      pickupDate:         document.getElementById('pickupDate').value,
       plannedReturnDate:  document.getElementById('plannedReturnDate').value,
+      partialReturnDate:  document.getElementById('partialReturnDate').value,
       items:              items
     };
 
     google.script.run
       .withSuccessHandler(function(res) {
-        btn.disabled = false;
-        btn.textContent = '登録する';
         showResult(res);
       })
       .withFailureHandler(function(err) {
@@ -278,74 +344,52 @@
   }
 
   function showResult(res) {
-    var box = document.getElementById('resultBox');
+    var box   = document.getElementById('resultBox');
     var title = document.getElementById('resultTitle');
-    var msgDiv = document.getElementById('resultMsg');
-    var msgText = document.getElementById('msgText');
-
+    var msg   = document.getElementById('resultMsg');
     box.style.display = 'block';
     if (res.success) {
       box.className = 'result-box';
       title.textContent = '登録完了！伝票番号: ' + res.slipNo;
-      msgDiv.innerHTML =
-        '<div style="display:flex;gap:8px;margin-top:4px;">' +
-          '<button class="reset-btn" style="flex:1;" onclick="resetForm()">続けて登録する</button>' +
+      msg.innerHTML =
+        '<div style="margin-top:8px;">' +
+          '<button class="reset-btn" onclick="resetForm()">続けて登録する</button>' +
         '</div>';
-      msgText.style.display = 'none';
-      document.getElementById('copyArea').style.display = 'none';
       document.getElementById('submitBtn').style.display = 'none';
     } else {
       box.className = 'result-box error';
       title.textContent = 'エラー';
-      msgDiv.textContent = res.message;
-      msgText.style.display = 'none';
+      msg.textContent = res.message;
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').textContent = '登録する';
     }
     box.scrollIntoView({ behavior: 'smooth' });
   }
 
-  function copyMsg() {
-    var el = document.getElementById('msgText');
-    el.select();
-    document.execCommand('copy');
-    var copied = document.getElementById('copiedMsg');
-    copied.style.display = 'inline';
-    setTimeout(function() { copied.style.display = 'none'; }, 2000);
-  }
-
-  function openPrintDialog(slipNo) {
-    google.script.run.openPrintSlipDialogWithNo(slipNo);
-  }
-
   function resetForm() {
-    document.getElementById('staff').value = '';
-    document.getElementById('stylist').value = '';
-    document.getElementById('phone').value = '';
-    document.getElementById('plannedReturnDate').value = '';
     document.getElementById('mediaSetList').innerHTML = '';
     document.getElementById('itemList').innerHTML = '';
     mediaSetCount = 0;
     itemCount = 0;
+    document.getElementById('staff').value = '';
+    document.getElementById('name').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('plannedReturnDate').value = '';
+    document.getElementById('partialReturnDate').value = '';
     document.getElementById('resultBox').style.display = 'none';
     document.getElementById('submitBtn').style.display = 'block';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = '登録する';
+    // ピックアップ日は今日にリセット
+    var t = new Date();
+    var y = t.getFullYear();
+    var m = String(t.getMonth() + 1).padStart(2, '0');
+    var d = String(t.getDate()).padStart(2, '0');
+    document.getElementById('pickupDate').value = y + '-' + m + '-' + d;
     addMediaSet();
     addItem();
     window.scrollTo(0, 0);
   }
-
-  // 担当者リスト読み込み
-  function populateStaffSelect(list) {
-    var sel = document.getElementById('staff');
-    list.forEach(function(name) {
-      var opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
-    });
-  }
-  google.script.run
-    .withSuccessHandler(populateStaffSelect)
-    .withFailureHandler(function() {})
-    .getStaffList();
 
   // 初期表示
   addMediaSet();
