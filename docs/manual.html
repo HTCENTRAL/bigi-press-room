@@ -195,6 +195,7 @@
     <a href="#sheet">掲載リスト作成</a>
     <a href="#edit">伝票編集</a>
     <a href="#publish">掲載リストマスタ編集</a>
+    <a href="#itemmaster">品番マスタ更新</a>
   </nav>
 
   <div class="content">
@@ -235,6 +236,10 @@
           <tr>
             <td>掲載リストマスタ編集</td>
             <td>掲載リストを修正する</td>
+          </tr>
+          <tr>
+            <td>品番マスタ更新</td>
+            <td>外部データを貼り付けて品番マスタに一括登録する</td>
           </tr>
         </tbody>
       </table>
@@ -492,6 +497,47 @@
         </div>
       </div>
       <div class="note">削除した掲載データは元に戻せません。間違えた場合は「返却・掲載登録処理」から再度掲載登録を行ってください。</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 品番マスタ更新 -->
+    <div class="section" id="itemmaster">
+      <div class="section-title">品番マスタ更新</div>
+      <div class="section-sub">外部データを貼り付けて品番マスタに一括登録するときに使います</div>
+      <div class="menu-path">メニュー › 品番マスタ更新</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>「品番マスタコピペ先」タブにデータを貼り付ける</strong>
+            <p>外部システムからコピーしたデータをそのまま貼り付けます。1行目から貼り付けてください（ヘッダー行の有無は問いません）。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>メニューから「品番マスタ更新」を選ぶ</strong>
+            <p>確認ダイアログが開きます。新規追加件数とスキップ件数が表示されます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>内容を確認して「はい」を押す</strong>
+            <p>品番マスタにまだ登録されていないレコードのみ末尾に追記されます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>品番マスタで空欄を手入力する</strong>
+            <p>追記されたレコードのブランド列など、自動取得できない項目を品番マスタシートに直接入力します。</p>
+          </div>
+        </div>
+      </div>
+      <div class="note">品番＋カラーの組み合わせが同じレコードはスキップされます。品番マスタ側で手入力した内容は、何度更新を実行しても上書きされません。</div>
     </div>
 
   </div>
