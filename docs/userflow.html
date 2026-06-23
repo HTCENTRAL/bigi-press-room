@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIGI PRESS ROOM — ユーザーワークフロー</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      background: #fafafa;
+      color: #222;
+      padding: 60px 24px 100px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .header h1 { font-size: 22px; font-weight: bold; margin-bottom: 6px; }
+    .header p  { font-size: 13px; color: #888; }
+
+    /* 区分ラベル */
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      color: #fff;
+      background: #222;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+    .section-label.orange { background: #FF9900; }
+    .section-label.blue   { background: #4a90d9; }
+    .section-label.green  { background: #52a06e; }
+    .section-label.gray   { background: #999; }
+
+    /* カラム */
+    .page { max-width: 860px; margin: 0 auto; }
+
+    .flow-section {
+      margin-bottom: 56px;
+    }
+
+    /* フローカード列 */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+
+    .flow-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-left: 3px solid #FF9900;
+      border-radius: 6px;
+      padding: 16px 20px;
+      min-width: 140px;
+      flex: 1;
+    }
+    .flow-card.blue  { border-left-color: #4a90d9; }
+    .flow-card.green { border-left-color: #52a06e; }
+    .flow-card.gray  { border-left-color: #ccc; }
+
+    .flow-card .card-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #222;
+    }
+    .flow-card .card-sub {
+      font-size: 11px;
+      color: #888;
+      line-height: 1.7;
+    }
+
+    .flow-arrow {
+      font-size: 18px;
+      color: #ccc;
+      padding: 0 10px;
+      flex-shrink: 0;
+    }
+
+    /* 分岐ブロック */
+    .branch-wrap {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      margin-left: 0;
+    }
+    .branch-item {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      padding: 14px 18px;
+    }
+    .branch-item .branch-cond {
+      font-size: 11px;
+      font-weight: bold;
+      color: #FF9900;
+      margin-bottom: 6px;
+    }
+    .branch-item.blue .branch-cond { color: #4a90d9; }
+    .branch-item .branch-body {
+      font-size: 12px;
+      color: #444;
+      line-height: 1.8;
+    }
+
+    /* ステップリスト */
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .step-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 20px;
+      height: 20px;
+      background: #FF9900;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: bold;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-num.blue  { background: #4a90d9; }
+    .step-num.green { background: #52a06e; }
+    .step-num.gray  { background: #bbb; }
+    .step-text {
+      font-size: 13px;
+      color: #333;
+      line-height: 1.7;
+    }
+    .step-text small {
+      display: block;
+      font-size: 11px;
+      color: #999;
+      margin-top: 1px;
+    }
+
+    /* 随時テーブル */
+    .ad-hoc-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .ad-hoc-table th {
+      text-align: left;
+      padding: 8px 14px;
+      background: #f5f5f5;
+      font-size: 11px;
+      color: #888;
+      font-weight: normal;
+      border-bottom: 1px solid #eee;
+    }
+    .ad-hoc-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+    }
+    .ad-hoc-table td:first-child { color: #333; width: 220px; }
+    .ad-hoc-table td:last-child  { color: #888; font-size: 12px; }
+
+    .divider { height: 1px; background: #eee; margin: 0 0 56px; }
+
+    .footer { text-align: center; font-size: 11px; color: #ccc; margin-top: 40px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>ユーザーワークフロー</h1>
+    <p>BIGI PRESS ROOM — 業務ごとの操作の流れ</p>
+  </div>
+
+  <div class="page">
+
+    <!-- ① 導入時のみ -->
+    <div class="flow-section">
+      <div class="section-label gray">導入時のみ</div>
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-num gray">1</div>
+          <div class="step-text">Apps Script エディタで <code>setupSheets()</code> を実行
+            <small>全シートとヘッダーが自動生成されます</small>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num gray">2</div>
+          <div class="step-text">設定シートにプレスルーム情報（名称・住所・TEL・FAX）を入力</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num gray">3</div>
+          <div class="step-text">クレジットマスタにブランド連絡先を登録
+            <small>伝票印刷のクレジット欄に使われます</small>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num gray">4</div>
+          <div class="step-text">品番マスタコピペ先にアイテムデータを貼り付けて「品番マスタ更新」を実行
+            <small>品番マスタのブランド列などは手入力で補完します</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ② 貸出時 -->
+    <div class="flow-section">
+      <div class="section-label orange">日常業務 ① 貸出時</div>
+      <div class="flow-row">
+        <div class="flow-card">
+          <div class="card-title">新規貸出登録</div>
+          <div class="card-sub">貸出先・媒体・アイテムを入力</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-card">
+          <div class="card-title">伝票印刷</div>
+          <div class="card-sub">PDFで印刷してスタイリストへ渡す</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ③ 返却時 -->
+    <div class="flow-section">
+      <div class="section-label orange">日常業務 ② 返却時</div>
+      <div class="flow-row">
+        <div class="flow-card">
+          <div class="card-title">返却・掲載登録処理</div>
+          <div class="card-sub">伝票番号で検索してアイテム一覧を確認</div>
+        </div>
+      </div>
+      <div class="branch-wrap">
+        <div class="branch-item">
+          <div class="branch-cond">掲載なし</div>
+          <div class="branch-body">返却のみ処理して完了<br>ステータスが「返却済」に更新される</div>
+        </div>
+        <div class="branch-item blue">
+          <div class="branch-cond blue">掲載あり</div>
+          <div class="branch-body">返却＋掲載情報を1画面でまとめて処理<br>掲載リストマスタへ自動転記される</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ④ 掲載情報の後追い -->
+    <div class="flow-section">
+      <div class="section-label orange">日常業務 ③ 掲載情報が後から確定したとき</div>
+      <div class="flow-row">
+        <div class="flow-card">
+          <div class="card-title">掲載リストマスタ編集</div>
+          <div class="card-sub">伝票番号で検索して頁・画像リンクなどを追記・修正</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ⑤ 月次 -->
+    <div class="flow-section">
+      <div class="section-label blue">月次業務</div>
+      <div class="flow-row">
+        <div class="flow-card blue">
+          <div class="card-title">掲載リスト作成</div>
+          <div class="card-sub">メインブランド × 年を選んで実行</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-card blue">
+          <div class="card-title">整形シート自動生成</div>
+          <div class="card-sub">種別・公開日順に整理された掲載リストが完成</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ⑥ 随時 -->
+    <div class="flow-section">
+      <div class="section-label green">随時業務</div>
+      <table class="ad-hoc-table">
+        <thead>
+          <tr>
+            <th>やりたいこと</th>
+            <th>使う機能</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>未返却アイテムを確認したい</td>
+            <td>貸出管理シートの赤行を目視確認</td>
+          </tr>
+          <tr>
+            <td>品番マスタにアイテムを追加したい</td>
+            <td>品番マスタコピペ先に貼り付け → 品番マスタ更新 → 手入力で補完</td>
+          </tr>
+          <tr>
+            <td>貸出内容（媒体・日程など）を修正したい</td>
+            <td>伝票編集</td>
+          </tr>
+          <tr>
+            <td>誤って返却済にしてしまった</td>
+            <td>伝票編集 →「未返却に戻す」</td>
+          </tr>
+          <tr>
+            <td>クレジットマスタのブランド情報を更新したい</td>
+            <td>クレジットマスタシートを直接編集</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="footer">BIGI PRESS ROOM</div>
+
+</body>
+</html>
