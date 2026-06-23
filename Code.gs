@@ -1,11 +1,12 @@
 // BIGI PRESS ROOM アパレル貸出管理システム
 
-var SHEET_LOAN    = '貸出管理';
-var SHEET_PUBLISH = '掲載リストマスタ';
-var SHEET_SETTINGS = '設定';
-var SHEET_CREDIT  = 'クレジットマスタ';
-var SHEET_ITEM    = '品番マスタ';
-var SHEET_CONTACT = '貸出先マスタ';
+var SHEET_LOAN       = '貸出管理';
+var SHEET_PUBLISH    = '掲載リストマスタ';
+var SHEET_SETTINGS   = '設定';
+var SHEET_CREDIT     = 'クレジットマスタ';
+var SHEET_ITEM       = '品番マスタ';
+var SHEET_ITEM_PASTE = '品番マスタコピペ先';
+var SHEET_CONTACT    = '貸出先マスタ';
 var START_SLIP_NO = 8877;
 
 // 貸出管理シート 列番号（1-based）
@@ -67,17 +68,7 @@ var TYPE_CONFIG = {
 };
 var TYPE_ORDER = ['雑誌(紙面)', '雑誌(WEB)', 'TV', 'その他'];
 
-// === アクセス制御 ===
-var AUTHORIZED_SPREADSHEET_ID = '19akNHKZ4kcfHTFrY9THqVvZoNOpwCmGBySUxihqAuA4';
-
-function checkAuthorized() {
-  if (SpreadsheetApp.getActive().getId() !== AUTHORIZED_SPREADSHEET_ID) {
-    throw new Error('このシートでは使用できません。');
-  }
-}
-
 function onOpen() {
-  try { checkAuthorized(); } catch(e) { return; }
   SpreadsheetApp.getUi()
     .createMenu('貸出管理')
     .addItem('新規貸出登録', 'openLoanSidebar')
@@ -86,6 +77,8 @@ function onOpen() {
     .addItem('返却・掲載登録処理', 'openReturnDialog')
     .addSeparator()
     .addItem('掲載リスト作成', 'openFormattedSheetDialog')
+    .addSeparator()
+    .addItem('品番マスタ更新', 'importItemMaster')
     .addSeparator()
     .addItem('伝票編集', 'openMediaSetDialog')
     .addItem('掲載リストマスタ編集', 'openPublishListEditDialog')
@@ -189,6 +182,12 @@ function setupSheets() {
     }
   }
 
+  // === 品番マスタコピペ先シート（素データ貼り付け用） ===
+  var itemPasteSheet = ss.getSheetByName(SHEET_ITEM_PASTE);
+  if (!itemPasteSheet) {
+    itemPasteSheet = ss.insertSheet(SHEET_ITEM_PASTE);
+  }
+
   // === 貸出先マスタシート（新規） ===
   var contactSheet = ss.getSheetByName(SHEET_CONTACT);
   if (!contactSheet) {
@@ -244,7 +243,6 @@ function todayStr() {
 
 function lookupItemMaster(itemCode, colorCode) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEM);
     if (!sheet || sheet.getLastRow() <= 1) return null;
     var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
@@ -269,7 +267,6 @@ function lookupItemMaster(itemCode, colorCode) {
 
 function getMainBrandList() {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEM);
     if (!sheet || sheet.getLastRow() <= 1) return [];
     var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
@@ -284,11 +281,101 @@ function getMainBrandList() {
   }
 }
 
+// === 品番マスタ インポート ===
+
+function importItemMaster() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var srcSheet = ss.getSheetByName(SHEET_ITEM_PASTE);
+  if (!srcSheet) {
+    SpreadsheetApp.getUi().alert('「' + SHEET_ITEM_PASTE + '」シートが見つかりません。');
+    return;
+  }
+  var srcLastRow = srcSheet.getLastRow();
+  if (srcLastRow < 1) {
+    SpreadsheetApp.getUi().alert('コピペ先にデータがありません。');
+    return;
+  }
+
+  // コピペ先から抽出・ユニーク化（品番+カラーをキー）
+  var srcData = srcSheet.getRange(1, 1, srcLastRow, 17).getValues();
+  var seen = {};
+  var srcItems = [];
+  for (var i = 0; i < srcData.length; i++) {
+    var r = srcData[i];
+    var itemCode  = String(r[5]).trim();   // F列
+    var color     = String(r[10]).trim();  // K列
+    if (!itemCode) continue;
+    var key = itemCode + '\t' + color;
+    if (seen[key]) continue;
+    seen[key] = true;
+    var priceRaw = r[16]; // Q列
+    var price = '';
+    if (priceRaw !== '' && priceRaw !== null && priceRaw !== undefined) {
+      var p = parseFloat(String(priceRaw).replace(/,/g, ''));
+      if (!isNaN(p)) price = Math.floor(p * 1.1);
+    }
+    srcItems.push({
+      key:       key,
+      mainBrand: String(r[2]).trim(),   // C列
+      itemCode:  itemCode,
+      color:     color,
+      colorName: String(r[11]).trim(),  // L列
+      price:     price,
+      itemName:  String(r[13]).trim()   // N列
+    });
+  }
+  if (srcItems.length === 0) {
+    SpreadsheetApp.getUi().alert('有効なデータが見つかりませんでした（F列が空の行はスキップされます）。');
+    return;
+  }
+
+  // 既存マスタを読み込んでキーマップ化（ブランドを保持するため）
+  var destSheet = ss.getSheetByName(SHEET_ITEM);
+  var masterMap = {};
+  var masterLastRow = getLastDataRow(destSheet);
+  if (masterLastRow > 1) {
+    var masterData = destSheet.getRange(2, 1, masterLastRow - 1, 7).getValues();
+    for (var j = 0; j < masterData.length; j++) {
+      if (!masterData[j][2]) continue;
+      var mKey = String(masterData[j][2]).trim() + '\t' + String(masterData[j][3]).trim();
+      masterMap[mKey] = true;
+    }
+  }
+
+  // 品番マスタに存在しない行だけ抽出
+  var appendRows = [];
+  for (var k = 0; k < srcItems.length; k++) {
+    if (!masterMap[srcItems[k].key]) {
+      var it = srcItems[k];
+      appendRows.push([it.mainBrand, '', it.itemCode, it.color, it.colorName, it.price, it.itemName]);
+    }
+  }
+
+  var ui = SpreadsheetApp.getUi();
+  if (appendRows.length === 0) {
+    ui.alert('追加対象なし', 'コピペ先の全レコードはすでに品番マスタに存在します。', ui.ButtonSet.OK);
+    return;
+  }
+
+  var skipCount = srcItems.length - appendRows.length;
+  var msg = '品番マスタに追記します。\n\n' +
+    '  新規追加: ' + appendRows.length + ' 件\n' +
+    '  スキップ（既存）: ' + skipCount + ' 件\n\n' +
+    '既存レコードは変更されません。続けますか？';
+  if (ui.alert('品番マスタ更新確認', msg, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+
+  var nextRow = masterLastRow + 1;
+  destSheet.getRange(nextRow, 1, appendRows.length, 7).setValues(appendRows);
+  destSheet.getRange(nextRow, 3, appendRows.length, 1).setNumberFormat('@');
+  destSheet.getRange(nextRow, 4, appendRows.length, 1).setNumberFormat('@');
+
+  ui.alert('完了', appendRows.length + ' 件を追加しました。', ui.ButtonSet.OK);
+}
+
 // === 貸出先マスタ ===
 
 function getContactList() {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_CONTACT);
     if (!sheet || sheet.getLastRow() <= 1) return [];
     var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
@@ -338,7 +425,6 @@ function openLoanSidebar() {
 
 function registerLoan(data) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     var slipNo = getNextSlipNumber();
     var today  = todayStr();
@@ -478,7 +564,6 @@ function getInitialSlipNo() {
 
 function getSlipDataAndCredits(slipNo) {
   try {
-    checkAuthorized();
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_LOAN);
     var s = String(slipNo);
@@ -579,7 +664,6 @@ function getSlipDataAndCredits(slipNo) {
 
 function getMediaSetsForSlip(slipNo) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     var s = String(slipNo);
     while (s.length < 5) s = '0' + s;
@@ -656,7 +740,6 @@ function insertCreditDummyData() {
 
 function addMediaSetToSlip(params) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     var s = String(params.slipNo);
     while (s.length < 5) s = '0' + s;
@@ -702,7 +785,6 @@ function openReturnDialog() {
 
 function searchUnreturnedItems(slipNo) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     var s = String(slipNo);
     while (s.length < 5) s = '0' + s;
@@ -745,7 +827,6 @@ function searchUnreturnedItems(slipNo) {
 
 function processReturn(params) {
   try {
-    checkAuthorized();
     var loanSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     for (var i = 0; i < params.rows.length; i++) {
       var r = params.rows[i].rowIndex;
@@ -760,7 +841,6 @@ function processReturn(params) {
 
 function processPublish(params) {
   try {
-    checkAuthorized();
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var loanSheet = ss.getSheetByName(SHEET_LOAN);
     var pubSheet  = ss.getSheetByName(SHEET_PUBLISH);
@@ -800,7 +880,6 @@ function processPublish(params) {
 
 function processReturnAndPublish(params) {
   try {
-    checkAuthorized();
     var retResult = processReturn(params.returnData);
     if (!retResult.success) return retResult;
     if (params.publishData && params.publishData.combinations && params.publishData.combinations.length > 0) {
@@ -856,7 +935,6 @@ function getPublishDataForMonth(year, month) {
 
 function getSlipDataForEdit(slipNo) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     var s = String(slipNo);
     while (s.length < 5) s = '0' + s;
@@ -917,7 +995,6 @@ function getSlipDataForEdit(slipNo) {
 
 function updateSlipData(slipNo, params) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_LOAN);
     var s = String(slipNo);
     while (s.length < 5) s = '0' + s;
@@ -964,7 +1041,6 @@ function updateSlipData(slipNo, params) {
 
 function getPublishRowsForSlip(slipNo) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
     var s = String(slipNo);
     while (s.length < 5) s = '0' + s;
@@ -1008,7 +1084,6 @@ function getPublishRowsForSlip(slipNo) {
 
 function updatePublishRow(rowIndex, data) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
     sheet.getRange(rowIndex, 1, 1, COL_PUB.TOTAL).setValues([[
       data.slipNo, data.type, data.media, data.issue, data.releaseDate,
@@ -1024,7 +1099,6 @@ function updatePublishRow(rowIndex, data) {
 
 function deletePublishRow(rowIndex) {
   try {
-    checkAuthorized();
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PUBLISH);
     sheet.deleteRow(rowIndex);
     return { success: true };
@@ -1041,7 +1115,6 @@ function openPublishListEditDialog() {
 
 function revertToUnreturned(slipNo) {
   try {
-    checkAuthorized();
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var loanSheet = ss.getSheetByName(SHEET_LOAN);
     var pubSheet  = ss.getSheetByName(SHEET_PUBLISH);
@@ -1110,7 +1183,6 @@ function openFormattedSheetDialog() {
 
 function generateFormattedSheet(params) {
   try {
-    checkAuthorized();
     var year      = Number(params.year);
     var mainBrand = String(params.mainBrand).trim();
 
