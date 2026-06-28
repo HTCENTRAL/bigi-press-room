@@ -131,6 +131,10 @@
         fetchData();
       }
     })
+    .withFailureHandler(function(err) {
+      if (err.message && err.message.indexOf('承認') !== -1) return;
+      showMsg('初期化エラー: ' + err.message, 'error');
+    })
     .getInitialSlipNo();
 
   function showMsg(text, type) {

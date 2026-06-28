@@ -134,12 +134,6 @@ function setupSheets() {
   // === 設定シート ===
   var settingsSheet = ss.getSheetByName(SHEET_SETTINGS);
   if (!settingsSheet) settingsSheet = ss.insertSheet(SHEET_SETTINGS);
-  if (!settingsSheet.getRange('A3').getValue()) {
-    settingsSheet.getRange('A3').setValue('ブランド名').setFontWeight('bold');
-  }
-  if (!settingsSheet.getRange('B3').getValue()) {
-    settingsSheet.getRange('B3').setValue("L'EQUIPE");
-  }
   if (!settingsSheet.getRange('A5').getValue()) {
     var prRows = [
       ['PRESS ROOM 1 名称', 'BIGI CO.,LTD. PRESS ROOM（石橋ビル）'],
@@ -1167,13 +1161,6 @@ function testGetLastDataRow() {
 }
 
 // === 掲載リスト作成 ===
-
-function getBrandName() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_SETTINGS);
-  if (!sheet) return 'BIGI PRESS ROOM';
-  var v = sheet.getRange('B3').getValue();
-  return v ? String(v) : 'BIGI PRESS ROOM';
-}
 
 function openFormattedSheetDialog() {
   var html = HtmlService.createHtmlOutputFromFile('FormattedSheetDialog')

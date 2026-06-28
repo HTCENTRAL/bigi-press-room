@@ -240,6 +240,7 @@
       .withFailureHandler(function(err) {
         btn.disabled = false;
         btn.textContent = 'マスタ検索';
+        if (err.message && err.message.indexOf('承認') !== -1) return;
         alert('マスタ検索エラー: ' + err.message);
       })
       .lookupItemMaster(code.trim(), color.trim());
