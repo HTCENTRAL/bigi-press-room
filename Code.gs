@@ -7,6 +7,7 @@ var SHEET_CREDIT     = 'クレジットマスタ';
 var SHEET_ITEM       = '品番マスタ';
 var SHEET_ITEM_PASTE = '品番マスタコピペ先';
 var SHEET_CONTACT    = '貸出先マスタ';
+var SHEET_PRESSROOM  = 'PressRoomマスタ';
 var START_SLIP_NO = 8877;
 
 // 貸出管理シート 列番号（1-based）
@@ -134,21 +135,6 @@ function setupSheets() {
   // === 設定シート ===
   var settingsSheet = ss.getSheetByName(SHEET_SETTINGS);
   if (!settingsSheet) settingsSheet = ss.insertSheet(SHEET_SETTINGS);
-  if (!settingsSheet.getRange('A5').getValue()) {
-    var prRows = [
-      ['PRESS ROOM 1 名称', 'BIGI CO.,LTD. PRESS ROOM（石橋ビル）'],
-      ['PRESS ROOM 1 住所', '〒153-8610 東京都目黒区青葉台2-1-4, 2F'],
-      ['PRESS ROOM 1 TEL',  '03-6861-7702'],
-      ['PRESS ROOM 1 FAX',  '03-6861-7703'],
-      ['', ''],
-      ['PRESS ROOM 2 名称', 'BIGI CO.,LTD. PRESS ROOM（ダミービル）'],
-      ['PRESS ROOM 2 住所', '（ダミー住所）'],
-      ['PRESS ROOM 2 TEL',  '03-xxxx-xxxx'],
-      ['PRESS ROOM 2 FAX',  '03-xxxx-xxxx']
-    ];
-    settingsSheet.getRange(5, 1, prRows.length, 2).setValues(prRows);
-    settingsSheet.getRange(5, 1, prRows.length, 1).setFontWeight('bold');
-  }
 
   // === クレジットマスタシート ===
   var creditSheet = ss.getSheetByName(SHEET_CREDIT);
@@ -191,6 +177,23 @@ function setupSheets() {
     contactSheet.getRange(1, 1, 1, contactHeaders.length)
       .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
     contactSheet.setFrozenRows(1);
+  }
+
+  // === PressRoomマスタシート（新規） ===
+  var pressRoomSheet = ss.getSheetByName(SHEET_PRESSROOM);
+  if (!pressRoomSheet) {
+    pressRoomSheet = ss.insertSheet(SHEET_PRESSROOM);
+    var pressRoomHeaders = ['表示項目', '名称', '住所', 'TEL', 'FAX'];
+    pressRoomSheet.getRange(1, 1, 1, pressRoomHeaders.length).setValues([pressRoomHeaders]);
+    pressRoomSheet.getRange(1, 1, 1, pressRoomHeaders.length)
+      .setBackground('#4a4a4a').setFontColor('#ffffff').setFontWeight('bold');
+    pressRoomSheet.setFrozenRows(1);
+    var pressRoomRows = [
+      ['PRESS ROOM 1', 'BIGI CO.,LTD. PRESS ROOM（石橋ビル）', '〒153-8610 東京都目黒区青葉台2-1-4, 2F', '03-6861-7702', '03-6861-7703'],
+      ['PRESS ROOM 2', 'BIGI CO.,LTD. PRESS ROOM（南平台ビル）', '〒150-0036 東京都渋谷区南平台町17-12, B1F', '03-5428-0370', ''],
+      ['PRESS ROOM 3', 'BIGI CO.,LTD. unbilanc PRESS ROOM', '〒107-0062 東京都港区南青山6-2-2 南青山ホームズ209', '03-6712-5580', '']
+    ];
+    pressRoomSheet.getRange(2, 1, pressRoomRows.length, pressRoomHeaders.length).setValues(pressRoomRows);
   }
 
   Logger.log('setup done');
@@ -630,18 +633,21 @@ function getSlipDataAndCredits(slipNo) {
       });
     }
 
-    // PRESS ROOM情報
+    // PRESS ROOM情報（PressRoomマスタから可変長取得）
     var pressRooms = [];
-    var settingsSheet = ss.getSheetByName(SHEET_SETTINGS);
-    if (settingsSheet) {
-      var prRange = settingsSheet.getRange(5, 2, 9, 1).getValues();
-      if (prRange[0][0]) pressRooms.push({
-        label: cellToStr(prRange[0][0]), address: cellToStr(prRange[1][0]),
-        tel: cellToStr(prRange[2][0]), fax: cellToStr(prRange[3][0])
-      });
-      if (prRange[5][0]) pressRooms.push({
-        label: cellToStr(prRange[5][0]), address: cellToStr(prRange[6][0]),
-        tel: cellToStr(prRange[7][0]), fax: cellToStr(prRange[8][0])
+    var prSheet = ss.getSheetByName(SHEET_PRESSROOM);
+    if (prSheet && prSheet.getLastRow() > 1) {
+      var prData = prSheet.getRange(2, 1, prSheet.getLastRow() - 1, 5).getValues();
+      prData.forEach(function(row) {
+        var label = cellToStr(row[0]);
+        if (!label) return;
+        pressRooms.push({
+          label:   label,             // 表示項目（UI選択肢用、印刷には出さない）
+          name:    cellToStr(row[1]), // 名称（印刷見出し）
+          address: cellToStr(row[2]),
+          tel:     cellToStr(row[3]),
+          fax:     cellToStr(row[4])
+        });
       });
     }
 
